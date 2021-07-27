@@ -11,7 +11,7 @@ import (
 )
 
 func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
-	collection := db.RemindersCollection
+	collection := db.remindersCollection
 
 	filter := bson.M{
 		"$and": []bson.M{
@@ -35,7 +35,7 @@ func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
 }
 
 func (db *Db) DeleteReminder(reminderID int64) error {
-	collection := db.RemindersCollection
+	collection := db.remindersCollection
 
 	filter := bson.D{{"_id", reminderID}}
 
@@ -48,7 +48,7 @@ func (db *Db) GetReminder(id int64) (internal.Reminder, error) {
 
 	var reminder internal.Reminder
 
-	err := db.RemindersCollection.FindOne(
+	err := db.remindersCollection.FindOne(
 		context.TODO(),
 		bson.M{
 			"name": objId,
@@ -66,7 +66,7 @@ func (db *Db) GetRemindersByChatID(chatId int64) (reminders []internal.Reminder,
 
 	reminders = make([]internal.Reminder, 0)
 
-	collection := db.RemindersCollection
+	collection := db.remindersCollection
 
 	// Sort by
 	findOptions := options.Find().SetSort(bson.D{{"time", 1}})
@@ -94,7 +94,7 @@ func (db *Db) GetRemindersByChatID(chatId int64) (reminders []internal.Reminder,
 
 func (db *Db) InsertReminder(r internal.Reminder) (internal.Reminder, error) {
 
-	collection := db.RemindersCollection
+	collection := db.remindersCollection
 
 	// Mongo go driver doesn't support auto-increasing unique ids
 	// so I implement it manually.
@@ -136,7 +136,7 @@ func (db *Db) getNextSeq(name string) (int64, error) {
 
 func (db *Db) UpdatePriority(id int64, priority int8) error {
 
-	collection := db.RemindersCollection
+	collection := db.remindersCollection
 
 	filter := bson.D{{"_id", id}}
 

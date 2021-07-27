@@ -24,14 +24,13 @@ type Job struct {
 	isLastRun bool
 }
 
-func NewJob(atTime time.Time, every time.Duration, from time.Time, loc *time.Location, data G) *Job {
+func NewJob(atTime time.Time, every time.Duration, from time.Time, data G) *Job {
 	return &Job{
 		atTime:    atTime,
 		every:     every,
 		from:      from,
 		lastRun:   time.Time{},
 		nextRun:   time.Time{},
-		loc:       loc,
 		data:      data,
 		passed:    false,
 		isLastRun: false,
@@ -82,9 +81,9 @@ func NewScheduler(ticker *time.Ticker, passedChannel chan interface{}) *Schedule
 }
 
 func (s *Scheduler) AddJob(data G, atTime time.Time, every time.Duration,
-	from time.Time, loc *time.Location) {
+	from time.Time) {
 
-	job := NewJob(atTime, every, from, loc, data)
+	job := NewJob(atTime, every, from, data)
 	job.PlanFirstRun()
 	s.jobs = append(s.jobs, job)
 }

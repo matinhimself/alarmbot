@@ -4,25 +4,31 @@ import "go.mongodb.org/mongo-driver/bson"
 
 import "github.com/psyg1k/remindertelbot/internal"
 
-func (db *Db) InsertUser(username string, userId int, name string, lang internal.Language) error {
-	collection := db.UsersCollection
+func (db *Db) InsertUser(user internal.User) error {
+	collection := db.usersCollection
 
-	if lang == "" {
-		lang = internal.ENGLISH
-	}
-
-	_, err := collection.InsertOne(nil, internal.User{
-		UserId:   userId,
-		Username: username,
-		Name:     name,
-		Language: lang,
-	})
+	_, err := collection.InsertOne(nil, user)
 
 	return err
 }
 
-func (db *Db) UpdateLanguage(lang string, chatId int64) error {
-	collection := db.ChatsCollection
+func (db *Db) UpdateUserTz(offset internal.Offset, userID int) error {
+	collection := db.usersCollection
+
+	filter := bson.D{{"_id", userID}}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"offset", offset},
+		}},
+	}
+
+	_, err := collection.UpdateOne(nil, filter, update)
+	return err
+}
+
+func (db *Db) UpdateLanguage(lang internal.Language, chatId int64) error {
+	collection := db.chatsCollection
 
 	filter := bson.D{{"_id", chatId}}
 
@@ -36,25 +42,14 @@ func (db *Db) UpdateLanguage(lang string, chatId int64) error {
 	return err
 }
 
-func (db *Db) GetUsers(id int) (users []*internal.User, err error) {
-	collection := db.UsersCollection
+func (db *Db) GetUser(id int) (u internal.User, err error) {
+	collection := db.usersCollection
 
 	filter := bson.D{{"_id", id}}
-
-	cur, err := collection.Find(nil, filter)
+	err = collection.FindOne(nil, filter).Decode(&u)
 	if err != nil {
-		return users, err
+		return u, err
 	}
 
-	for cur.Next(nil) {
-		var user internal.User
-
-		err := cur.Decode(&user)
-		if err != nil {
-			continue
-		}
-
-		users = append(users, &user)
-	}
-	return users, nil
+	return u, nil
 }

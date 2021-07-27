@@ -22,6 +22,10 @@ type Reminder struct {
 	Message int   `bson:"description"`
 }
 
+func (r *Reminder) GetIdentifier() int64 {
+	return r.Id
+}
+
 func (r *Reminder) Validate() error {
 	if r.AtTime.Before(r.Created) {
 		return fmt.Errorf("time is not validated")

@@ -8,7 +8,7 @@ import (
 )
 
 func (db *Db) DeleteTaskList(chatId int64) error {
-	collection := db.ChatsCollection
+	collection := db.chatsCollection
 
 	filter := bson.D{{"_id", chatId}}
 
@@ -17,7 +17,7 @@ func (db *Db) DeleteTaskList(chatId int64) error {
 }
 
 func (db *Db) GetTaskListMessageId(chatId int64) (int, error) {
-	collection := db.ChatsCollection
+	collection := db.chatsCollection
 
 	var chat internal.Chat
 
