@@ -61,3 +61,19 @@ func (db *Db) GetRemindersAfter(now time.Time) ([]internal.Reminder, error) {
 
 	return reminders, nil
 }
+
+func (db *Db) UpdateChatTz(chatId int64, offset internal.Offset) error {
+
+	collection := db.chatsCollection
+
+	filter := bson.D{{"_id", chatId}}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"offset", offset},
+		}},
+	}
+
+	_, err := collection.UpdateOne(nil, filter, update)
+	return err
+}

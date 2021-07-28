@@ -16,6 +16,7 @@ func main() {
 	b := bot.NewBot()
 	initTr()
 	b.Handle("/start", b.Entry)
+	b.Handle("/settz", b.SetTzCommand)
 	b.Handle("\f"+bot.LangCall, b.SetLanguage)
 	b.Handle("\f"+bot.TzCall, b.SetTz)
 	b.Run()

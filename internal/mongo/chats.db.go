@@ -16,6 +16,19 @@ func (db *Db) DeleteTaskList(chatId int64) error {
 	return err
 }
 
+func (db *Db) GetChat(chatId int64) (chat internal.Chat, err error) {
+	collection := db.chatsCollection
+
+	filter := bson.D{{"_id", chatId}}
+
+	err = collection.FindOne(nil, filter).Decode(&chat)
+
+	if err != nil {
+		return internal.Chat{}, err
+	}
+	return
+}
+
 func (db *Db) GetTaskListMessageId(chatId int64) (int, error) {
 	collection := db.chatsCollection
 
@@ -32,4 +45,12 @@ func (db *Db) GetTaskListMessageId(chatId int64) (int, error) {
 	}
 
 	return chat.TaskList, nil
+}
+
+func (db *Db) InsertChat(chat internal.Chat) error {
+	collection := db.chatsCollection
+
+	_, err := collection.InsertOne(nil, chat)
+
+	return err
 }

@@ -1,34 +1,23 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"github.com/psyg1k/remindertelbot/internal"
 )
 
 type Cache interface {
 	GetUser(int) (internal.User, error)
-	UpdateUserTz(int, internal.Offset) error
+	UpdateChatTz(int64, internal.Offset) error
+	GetChat(int64) (internal.Chat, error)
 }
 
-type NotFoundError struct{}
+var NotFoundError = errors.New("not found")
 
-func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("couldn't find document")
-}
-
-type MemCache map[int]internal.User
+type MemCache map[interface{}]interface{}
 
 func NewCache() MemCache {
-	return make(map[int]internal.User)
-}
-
-func (m MemCache) UpdateUserTz(userId int, tz internal.Offset) error {
-	val, ok := m[userId]
-	if !ok {
-		return fmt.Errorf("user not found")
-	}
-	val.Offset = tz
-	return nil
+	return make(map[interface{}]interface{})
 }
 
 func (m MemCache) GetUser(userId int) (user internal.User, err error) {
@@ -36,7 +25,34 @@ func (m MemCache) GetUser(userId int) (user internal.User, err error) {
 	if !ok {
 		return user, fmt.Errorf("user not fount")
 	}
-	return val, nil
+	return val.(internal.User), nil
+}
+
+func (m MemCache) GetChat(chatID int64) (chat internal.Chat, err error) {
+	val, ok := m[chatID]
+	if !ok {
+		return chat, fmt.Errorf("user not fount")
+	}
+	return val.(internal.Chat), nil
+}
+
+func (m MemCache) UpdateChatTz(chatID int64, offset internal.Offset) error {
+	val, ok := m[chatID]
+	if !ok {
+		return fmt.Errorf("chat not found")
+	}
+	chat := val.(internal.Chat)
+	chat.UTCOffset = offset
+	m[chatID] = chat
+	return nil
+}
+
+func (b *Bot) GetChat(chatId int64) (chat internal.Chat, err error) {
+	chat, err = b.Cache.GetChat(chatId)
+	if err != nil {
+		chat, err = b.db.GetChat(chatId)
+	}
+	return chat, err
 }
 
 func (b *Bot) GetUser(userId int) (user internal.User, err error) {
@@ -47,11 +63,12 @@ func (b *Bot) GetUser(userId int) (user internal.User, err error) {
 	return user, err
 }
 
-func (b *Bot) UpdateTz(userId int, tz internal.Offset) error {
-	err := b.Cache.UpdateUserTz(userId, tz)
+func (b *Bot) UpdateTz(chatId int64, tz internal.Offset) error {
+	err := b.Cache.UpdateChatTz(chatId, tz)
 	if err != nil {
+
 	}
 
-	err = b.db.UpdateUserTz(tz, userId)
+	err = b.db.UpdateChatTz(chatId, tz)
 	return err
 }

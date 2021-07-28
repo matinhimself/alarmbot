@@ -1,33 +1,38 @@
 package bot
 
 import (
+	"errors"
 	"github.com/psyg1k/remindertelbot/internal"
 	"github.com/tucnak/tr"
-	s2d "github.com/xhit/go-str2duration/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"log"
+	"regexp"
 	"strings"
+	"time"
 )
 
 const (
 	LangCall = "lang"
 	TzCall   = "tz"
+
+	DefaultEvery        = time.Hour * 12
+	DefaultFromDuration = time.Hour * 72
 )
 
 func (b *Bot) SetTzCommand(m *tb.Message) {
-	user, _ := b.GetUser(m.Sender.ID)
+	chat, _ := b.GetChat(m.Chat.ID)
 
 	parts := strings.SplitN(m.Text, " ", 2)
 	if len(parts) < 2 {
-		b.HandleError(m, tr.Lang(string(user.Language)).Tr("wrong_tz_format"))
+		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("wrong_tz_format"))
 	}
-	duration, err := s2d.ParseDuration(parts[1])
+	duration, err := time.ParseDuration(parts[1])
 	if err != nil {
-		b.HandleError(m, tr.Lang(string(user.Language)).Tr("wrong_tz_format"))
+		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("wrong_tz_format"))
 	}
 
-	err = b.UpdateTz(user.UserId, internal.Offset(duration))
+	err = b.UpdateTz(chat.ChatID, internal.Offset(duration))
 	if err != nil {
 		_, _ = b.Reply(m, err.Error())
 	}
@@ -38,27 +43,27 @@ func (b *Bot) HandleError(m *tb.Message, s string) {
 }
 
 func (b *Bot) SetTz(c *tb.Callback) {
-	user, _ := b.GetUser(c.Sender.ID)
-	offset, _ := s2d.ParseDuration(c.Data)
-	err := b.UpdateTz(c.Sender.ID, internal.Offset(offset))
+	chat, _ := b.GetChat(c.Message.Chat.ID)
+	offset, _ := time.ParseDuration(c.Data)
+	err := b.UpdateTz(c.Message.Chat.ID, internal.Offset(offset))
 	if err != nil {
 		log.Println(err)
 	}
-	_, _ = b.Edit(c.Message, tr.Lang(string(user.Language)).Tr("registered"))
+	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("registered"))
 }
 
 func (b *Bot) SetLanguage(call *tb.Callback) {
 	lang := internal.Language(call.Data)
 
-	user := internal.User{
-		UserId:   call.Sender.ID,
-		Username: call.Sender.Username,
-		Name:     strings.Join([]string{call.Sender.FirstName, call.Sender.LastName}, " "),
-		Language: lang,
-		Offset:   internal.Offset(0),
+	chat := internal.Chat{
+		ChatID:    call.Message.Chat.ID,
+		TaskList:  0,
+		UTCOffset: 0,
+		Language:  lang,
+		IsJalali:  true,
 	}
 
-	err := b.db.InsertUser(user)
+	err := b.db.InsertChat(chat)
 	if err != nil {
 		//TODO
 	}
@@ -92,10 +97,132 @@ func (b *Bot) ChooseLang(message *tb.Message) {
 }
 
 func (b *Bot) Entry(m *tb.Message) {
-	_, err := b.db.GetUser(m.Sender.ID)
+	_, err := b.db.GetChat(m.Chat.ID)
 	if err == mongo.ErrNoDocuments {
 		b.ChooseLang(m)
 	} else if err != nil {
 		log.Println(err)
 	}
 }
+
+var InvaliCommand = errors.New("invalid command")
+
+var InvalidTimeFormat = errors.New("invalid time format")
+
+func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bool) error {
+	if strings.ToLower(parts[0]) == "repeat" {
+		rem = internal.WithRepeat(rem)
+		return nil
+	}
+
+	if duration, err := time.ParseDuration(parts[0]); err != nil {
+		rem.AtTime = t.Add(duration)
+		return nil
+	}
+
+	var date time.Time
+	var err error
+
+	if isJalali {
+		date, err = stringToJalaliDate(parts[0])
+	} else {
+		date, err = stringToDate(parts[0])
+	}
+
+	if err != nil {
+		return InvalidTimeFormat
+	}
+
+	rem.AtTime = date
+
+	return nil
+}
+func ParseAddCommand(command string, rem *internal.Reminder, offset internal.Offset, isJalali bool) error {
+	t := time.Now().UTC()
+
+	if StringHasSubmatch(command, "-s") {
+		rem.Priority = internal.Silent
+	}
+
+	parts := strings.Split(command, " ")
+	if len(parts) < 2 {
+		return InvaliCommand
+	}
+
+	err := ParseParam(parts[1:], rem, t, isJalali)
+	if err != nil {
+		return err
+	}
+
+	param, err := GetParam(command, "-t", "time")
+	if err == nil {
+		err := formatDateTime(param, &rem.AtTime, offset)
+		if err != nil {
+			return err
+		}
+	}
+
+	if rem.AtTime.Unix() > t.Unix() {
+		return ErrPassedTime
+	}
+
+	param, err = GetParam(command, "-f", "from")
+	if err == nil {
+		d, err := time.ParseDuration(param)
+		if err != nil {
+			return ErrInvalidFromFormat
+		}
+		rem.From = rem.AtTime.Add(-1 * d)
+	} else if rem.IsRepeated {
+		rem.From = t
+	}
+	re := regexp.MustCompile(`-m "([^"]*)"`)
+	names := re.FindStringSubmatch(command)
+	if len(names) >= 2 {
+		rem.Description = names[1]
+	}
+
+	param, err = GetParam(command, "-e", "every")
+	if err == nil {
+		d, err := time.ParseDuration(param)
+		if err != nil || d < 5*time.Second {
+			return ErrInvalidEveryFormat
+		}
+		rem.Every = d
+	}
+	return nil
+
+}
+
+func (b *Bot) addCommand(m *tb.Message) {
+	chat, err := b.GetChat(m.Chat.ID)
+	if err != nil {
+		log.Printf("%v %v", err, m.Chat)
+	}
+	rem := internal.Reminder{
+		Every:   DefaultEvery,
+		From:    time.Now().UTC().Add(-1 * DefaultFromDuration),
+		Created: time.Now().UTC(),
+	}
+
+	err = ParseAddCommand(m.Text, &rem, chat.UTCOffset, chat.IsJalali)
+	if err == ErrInvalidEveryFormat {
+		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/every_format"))
+	} else if err == ErrInvalidFromFormat {
+		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/from_format"))
+	} else if err == ErrPassedTime {
+		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/passed_time"))
+	}
+
+	reminder, err := b.db.InsertReminder(rem)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// TODO: init alarm
+
+}
+
+var ErrInvalidFromFormat error = errors.New("invalid from format")
+var ErrPassedTime error = errors.New("passed time")
+var ErrInvalidEveryFormat error = errors.New("invalid every format")
