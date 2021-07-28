@@ -6,7 +6,7 @@ import (
 )
 
 type G interface {
-	GetIdentifier() int64
+	GetIdentifier() string
 }
 
 type Job struct {
@@ -38,7 +38,7 @@ func NewJob(atTime time.Time, every time.Duration, from time.Time, data G) *Job 
 }
 
 func (job *Job) IsTime() bool {
-	return !job.passed && !time.Now().In(job.loc).Before(job.nextRun)
+	return !job.passed && !time.Now().UTC().Before(job.nextRun)
 }
 
 func (s *Scheduler) Delete(index int) error {
@@ -51,7 +51,7 @@ func (s *Scheduler) Delete(index int) error {
 	return nil
 }
 
-func (s *Scheduler) DeleteByIdentifier(id int64) error {
+func (s *Scheduler) DeleteByIdentifier(id string) error {
 	for i := 0; i < len(s.jobs); i++ {
 		if s.jobs[i].data.GetIdentifier() == id {
 			err := s.Delete(i)
@@ -67,7 +67,7 @@ type Scheduler struct {
 	passedChannel chan interface{}
 }
 
-func (s *Scheduler) GetJobData(identifier int64) (G, bool) {
+func (s *Scheduler) GetJobData(identifier string) (G, bool) {
 	for _, job := range s.jobs {
 		if (job.data).GetIdentifier() == identifier {
 			return job.data, true
@@ -100,9 +100,9 @@ func (job *Job) PlanNext() {
 }
 
 func (job *Job) PlanFirstRun() {
-	t := time.Now().In(job.loc).Round(time.Second)
+	t := time.Now().UTC().Round(time.Second)
 
-	if job.from.In(job.loc).Unix() < t.Unix() {
+	if job.from.Unix() < t.Unix() {
 		if job.atTime.Sub(t) <= job.every {
 			job.isLastRun = true
 		}

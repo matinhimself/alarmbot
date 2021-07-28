@@ -6,7 +6,7 @@ type Chat struct {
 	ChatID    int64    `bson:"_id"`
 	TaskList  int      `bson:"task_list"`
 	UTCOffset Offset   `bson:"offset"`
-	IsJalali  bool     `bson:"offset"`
+	IsJalali  bool     `bson:"is_jalali"`
 	Language  Language `bson:"lang"`
 }
 

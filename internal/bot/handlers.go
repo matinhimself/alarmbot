@@ -2,6 +2,8 @@ package bot
 
 import (
 	"errors"
+	"fmt"
+	"github.com/jalaali/go-jalaali"
 	"github.com/psyg1k/remindertelbot/internal"
 	"github.com/tucnak/tr"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,12 +15,19 @@ import (
 )
 
 const (
-	LangCall = "lang"
-	TzCall   = "tz"
+	LangCall        = "lang"
+	TzCall          = "tz"
+	DeleteAlarmCall = "del"
+	MuteAlarmCall   = "mute"
+	UnMuteAlarmCall = "mute"
 
 	DefaultEvery        = time.Hour * 12
 	DefaultFromDuration = time.Hour * 72
 )
+
+var ErrInvalidFromFormat error = errors.New("invalid from format")
+var ErrPassedTime error = errors.New("passed time")
+var ErrInvalidEveryFormat error = errors.New("invalid every format")
 
 func (b *Bot) SetTzCommand(m *tb.Message) {
 	chat, _ := b.GetChat(m.Chat.ID)
@@ -65,14 +74,13 @@ func (b *Bot) SetLanguage(call *tb.Callback) {
 
 	err := b.db.InsertChat(chat)
 	if err != nil {
-		//TODO
+		fmt.Println(err)
 	}
 
 	selector := &tb.ReplyMarkup{}
 	selector.Inline(
 		selector.Row(selector.Data("Iran", TzCall, internal.IRAN.String())),
 	)
-
 	_, err = b.Edit(call.Message, tr.Lang(string(lang)).Tr("choose_region"), selector)
 	if err != nil {
 		log.Println(err)
@@ -115,7 +123,7 @@ func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bo
 		return nil
 	}
 
-	if duration, err := time.ParseDuration(parts[0]); err != nil {
+	if duration, err := time.ParseDuration(parts[0]); err == nil {
 		rem.AtTime = t.Add(duration)
 		return nil
 	}
@@ -162,7 +170,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, offset internal.Off
 		}
 	}
 
-	if rem.AtTime.Unix() > t.Unix() {
+	if rem.AtTime.Unix() < t.Unix() {
 		return ErrPassedTime
 	}
 
@@ -194,7 +202,8 @@ func ParseAddCommand(command string, rem *internal.Reminder, offset internal.Off
 
 }
 
-func (b *Bot) addCommand(m *tb.Message) {
+func (b *Bot) AddCommand(m *tb.Message) {
+
 	chat, err := b.GetChat(m.Chat.ID)
 	if err != nil {
 		log.Printf("%v %v", err, m.Chat)
@@ -208,21 +217,58 @@ func (b *Bot) addCommand(m *tb.Message) {
 	err = ParseAddCommand(m.Text, &rem, chat.UTCOffset, chat.IsJalali)
 	if err == ErrInvalidEveryFormat {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/every_format"))
+		return
 	} else if err == ErrInvalidFromFormat {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/from_format"))
+		return
 	} else if err == ErrPassedTime {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/passed_time"))
+		return
 	}
+
+	reply, err := b.Reply(m, tr.Lang(string(chat.Language)).Tr("adding_reminder"))
 
 	reminder, err := b.db.InsertReminder(rem)
 	if err != nil {
 		log.Println(err)
 	}
 
-	// TODO: init alarm
+	selector := createAlarmSelector(&reminder, chat.Language)
 
+	var message string
+	if rem.IsRepeated {
+		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_repeat")
+		message = fmt.Sprintf(messageFormat, rem.Description, rem.Every)
+	} else {
+		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_normal")
+
+		if chat.IsJalali {
+			jalaliTime, _ := jalaali.From(rem.AtTime).JFormat("Mon _2 Jan 06 | 15:04:05")
+			message = fmt.Sprintf(messageFormat, rem.Description, jalaliTime)
+		} else {
+			message = fmt.Sprintf(messageFormat, rem.Description, rem.AtTime.Format("Mon _2 Jan 06 | 15:04:05"))
+		}
+
+	}
+	_, _ = b.Edit(reply, message, selector)
+
+	b.AddReminder(&rem)
 }
 
-var ErrInvalidFromFormat error = errors.New("invalid from format")
-var ErrPassedTime error = errors.New("passed time")
-var ErrInvalidEveryFormat error = errors.New("invalid every format")
+func createAlarmSelector(rem *internal.Reminder, lang internal.Language) *tb.ReplyMarkup {
+	selector := &tb.ReplyMarkup{}
+
+	btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, fmt.Sprintf("%d", rem.Id))
+
+	var btnSec tb.Btn
+	if rem.Priority == 0 {
+		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/unmute"), UnMuteAlarmCall, fmt.Sprintf("%d", rem.Id))
+	} else {
+		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/mute"), MuteAlarmCall, fmt.Sprintf("%d", rem.Id))
+	}
+	selector.Inline(
+		selector.Row(btnDlt, btnSec),
+	)
+
+	return selector
+}

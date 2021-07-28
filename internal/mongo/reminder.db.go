@@ -96,19 +96,14 @@ func (db *Db) InsertReminder(r internal.Reminder) (internal.Reminder, error) {
 
 	collection := db.remindersCollection
 
-	// Mongo go driver doesn't support auto-increasing unique ids
-	// so I implement it manually.
-	// it stores last saved id in database and increases it everytime
-	// gets next sequence number
-	id, err := db.getNextSeq("id")
+	one, err := collection.InsertOne(nil, r)
 	if err != nil {
 		return internal.Reminder{}, err
 	}
+	oid, _ := one.InsertedID.(primitive.ObjectID)
+	r.Id = oid
+	return r, nil
 
-	r.Id = id
-
-	_, err = collection.InsertOne(nil, r)
-	return r, err
 }
 
 type count struct {

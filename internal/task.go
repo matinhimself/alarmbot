@@ -2,11 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 type Reminder struct {
-	Id int64 `bson:"_id"`
+	Id primitive.ObjectID `bson:"_id,omitempty"`
 
 	Description string `bson:"name"`
 
@@ -38,8 +39,8 @@ func WithRepeat(rem *Reminder) *Reminder {
 	return rem
 }
 
-func (r *Reminder) GetIdentifier() int64 {
-	return r.Id
+func (r *Reminder) GetIdentifier() string {
+	return r.Id.Hex()
 }
 
 func (r *Reminder) Validate() error {

@@ -20,7 +20,6 @@ func StringHasSubmatch(s, sub string) bool {
 func GetParam(text string, flags ...string) (string, error) {
 	for _, s := range flags {
 		reg := fmt.Sprintf(`\s%s\s*(.*?)(\z|\s)`, s)
-		fmt.Println(reg)
 		re := regexp.MustCompile(reg)
 		match := re.FindStringSubmatch(text)
 		if len(match) > 2 {
