@@ -2,14 +2,14 @@ package bot
 
 import (
 	"fmt"
-	"github.com/tucnak/tr"
-
 	"github.com/psyg1k/remindertelbot/internal"
 	m "github.com/psyg1k/remindertelbot/internal/mongo"
 	sc "github.com/psyg1k/remindertelbot/pkg/shceduler"
+	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -24,8 +24,9 @@ type Bot struct {
 }
 
 const (
-	MongoKey = "MONGO_URI"
-	TokenKey = "BOT_TOKEN"
+	MongoKey           = "MONGO_URI"
+	TokenKey           = "BOT_TOKEN"
+	SetTimeZoneCommand = "/settz"
 )
 
 func setDataBase() (*m.Db, error) {
@@ -124,10 +125,41 @@ func (b *Bot) Run() {
 }
 
 func (b *Bot) AddReminder(r *internal.Reminder) {
+	fmt.Printf("%v", r)
 	b.s.AddJob(r, r.AtTime, r.Every, r.From)
 }
 
+func (b *Bot) Qtz(q *tb.Query) {
+	results := make(tb.Results, 0)
+	var c int = 0
+	for _, url := range tzs {
+		if s := strings.Split(url, "/"); strings.HasPrefix(strings.ToLower(s[len(s)-1]), q.Text) {
+			c++
+			result := &tb.ArticleResult{
+				Title:   s[len(s)-1],
+				Text:    fmt.Sprintf("%s %s", SetTimeZoneCommand, url),
+				HideURL: true,
+			}
+			result.SetResultID(url)
+			results = append(results, result)
+		}
+		if c > 2 {
+			break
+		}
+	}
+
+	err := b.Answer(q, &tb.QueryResponse{
+		Results:   results,
+		CacheTime: 60,
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (b *Bot) sendAlarm(r *internal.Reminder) {
+	fmt.Printf("%v", r.AtTime.Add(210*time.Minute))
 	_, err := b.Send(&tb.Chat{ID: r.ChatId}, "message")
 	if err != nil {
 		fmt.Println(err)

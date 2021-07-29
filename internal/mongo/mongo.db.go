@@ -62,7 +62,7 @@ func (db *Db) GetRemindersAfter(now time.Time) ([]internal.Reminder, error) {
 	return reminders, nil
 }
 
-func (db *Db) UpdateChatTz(chatId int64, offset internal.Offset) error {
+func (db *Db) UpdateChatTz(chatId int64, location string) error {
 
 	collection := db.chatsCollection
 
@@ -70,7 +70,7 @@ func (db *Db) UpdateChatTz(chatId int64, offset internal.Offset) error {
 
 	update := bson.D{
 		{"$set", bson.D{
-			{"offset", offset},
+			{"loc", location},
 		}},
 	}
 

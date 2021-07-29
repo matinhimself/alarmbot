@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jalaali/go-jalaali"
-	"github.com/psyg1k/remindertelbot/internal"
 	"regexp"
 	"strconv"
 	"time"
@@ -52,7 +51,7 @@ func matchRegexAlt(s string, args ...*regexp.Regexp) (paramsMap map[string]strin
 	return paramsMap, errors.New("regexes not matched")
 }
 
-func formatDateTime(timeString string, date *time.Time, offset internal.Offset) error {
+func formatDateTime(timeString string, date *time.Time, loc *time.Location) error {
 	var sec, min, hour int
 	var round = time.Minute
 
@@ -71,11 +70,11 @@ func formatDateTime(timeString string, date *time.Time, offset internal.Offset) 
 		round = time.Second
 	}
 
-	*date = time.Date(date.Year(), date.Month(), date.Day(), hour, min, sec, 0, nil).Round(round).Add(-1 * time.Duration(offset))
+	*date = time.Date(date.Year(), date.Month(), date.Day(), hour, min, sec, 0, loc).Round(round).UTC()
 	return nil
 }
 
-func stringToJalaliDate(dateString string) (time.Time, error) {
+func stringToJalaliDate(dateString string, loc *time.Location) (time.Time, error) {
 	year, month, day, err := stringToParams(dateString)
 	if err != nil {
 		return time.Time{}, nil
@@ -84,16 +83,16 @@ func stringToJalaliDate(dateString string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return time.Date(year, month, day, 0, 0, 0, 0, nil), nil
+	return time.Date(year, month, day, 0, 0, 0, 0, loc), nil
 }
 
-func stringToDate(dateString string) (time.Time, error) {
+func stringToDate(dateString string, loc *time.Location) (time.Time, error) {
 	year, month, day, err := stringToParams(dateString)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	return time.Date(year, month, day, 0, 0, 0, 0, nil), nil
+	return time.Date(year, month, day, 0, 0, 0, 0, loc), nil
 }
 
 func stringToParams(dateString string) (int, time.Month, int, error) {

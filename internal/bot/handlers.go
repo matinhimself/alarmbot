@@ -31,30 +31,42 @@ var ErrInvalidEveryFormat error = errors.New("invalid every format")
 
 func (b *Bot) SetTzCommand(m *tb.Message) {
 	chat, _ := b.GetChat(m.Chat.ID)
-
-	parts := strings.SplitN(m.Text, " ", 2)
+	parts := strings.Split(m.Text, " ")
 	if len(parts) < 2 {
-		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("wrong_tz_format"))
+		b.HandleErrorErr(m, ErrInvalidTz, chat.Language)
+		return
 	}
-	duration, err := time.ParseDuration(parts[1])
+	_, err := time.LoadLocation(parts[1])
 	if err != nil {
-		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("wrong_tz_format"))
+		b.HandleErrorErr(m, ErrInvalidTz, chat.Language)
+		return
 	}
-
-	err = b.UpdateTz(chat.ChatID, internal.Offset(duration))
+	err = b.UpdateTz(chat.ChatID, parts[1])
 	if err != nil {
-		_, _ = b.Reply(m, err.Error())
+		log.Println(err)
 	}
+	b.Reply(m, tr.Lang(string(chat.Language)).Tr("tz_changed"))
 }
 
 func (b *Bot) HandleError(m *tb.Message, s string) {
 	_, _ = b.Reply(m, s)
 }
 
+func (b *Bot) HandleErrorErr(m *tb.Message, e error, lang internal.Language) {
+	if e == ErrInvalidTz {
+		_, _ = b.Reply(m, tr.Lang(string(lang)).Tr(fmt.Sprintf("errors/%s", e.Error())))
+	}
+}
+
+var ErrInvalidTz error = errors.New("invalid_timezone")
+
 func (b *Bot) SetTz(c *tb.Callback) {
 	chat, _ := b.GetChat(c.Message.Chat.ID)
-	offset, _ := time.ParseDuration(c.Data)
-	err := b.UpdateTz(c.Message.Chat.ID, internal.Offset(offset))
+	_, err := time.LoadLocation(c.Data)
+	if err != nil {
+		b.HandleErrorErr(c.Message, err, chat.Language)
+	}
+	err = b.UpdateTz(c.Message.Chat.ID, c.Data)
 	if err != nil {
 		log.Println(err)
 	}
@@ -65,21 +77,21 @@ func (b *Bot) SetLanguage(call *tb.Callback) {
 	lang := internal.Language(call.Data)
 
 	chat := internal.Chat{
-		ChatID:    call.Message.Chat.ID,
-		TaskList:  0,
-		UTCOffset: 0,
-		Language:  lang,
-		IsJalali:  true,
+		ChatID:   call.Message.Chat.ID,
+		TaskList: 0,
+		Loc:      "UTC",
+		Language: lang,
+		IsJalali: true,
 	}
 
 	err := b.db.InsertChat(chat)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	selector := &tb.ReplyMarkup{}
 	selector.Inline(
-		selector.Row(selector.Data("Iran", TzCall, internal.IRAN.String())),
+		selector.Row(selector.Data("Iran", TzCall, internal.IRAN)),
 	)
 	_, err = b.Edit(call.Message, tr.Lang(string(lang)).Tr("choose_region"), selector)
 	if err != nil {
@@ -117,7 +129,7 @@ var InvaliCommand = errors.New("invalid command")
 
 var InvalidTimeFormat = errors.New("invalid time format")
 
-func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bool) error {
+func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bool, loc *time.Location) error {
 	if strings.ToLower(parts[0]) == "repeat" {
 		rem = internal.WithRepeat(rem)
 		return nil
@@ -132,9 +144,9 @@ func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bo
 	var err error
 
 	if isJalali {
-		date, err = stringToJalaliDate(parts[0])
+		date, err = stringToJalaliDate(parts[0], loc)
 	} else {
-		date, err = stringToDate(parts[0])
+		date, err = stringToDate(parts[0], loc)
 	}
 
 	if err != nil {
@@ -145,7 +157,11 @@ func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bo
 
 	return nil
 }
-func ParseAddCommand(command string, rem *internal.Reminder, offset internal.Offset, isJalali bool) error {
+func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalali bool) error {
+	location, err := time.LoadLocation(loc)
+	if err != nil {
+		log.Println(err)
+	}
 	t := time.Now().UTC()
 
 	if StringHasSubmatch(command, "-s") {
@@ -157,14 +173,14 @@ func ParseAddCommand(command string, rem *internal.Reminder, offset internal.Off
 		return InvaliCommand
 	}
 
-	err := ParseParam(parts[1:], rem, t, isJalali)
+	err = ParseParam(parts[1:], rem, t, isJalali, location)
 	if err != nil {
 		return err
 	}
 
 	param, err := GetParam(command, "-t", "time")
 	if err == nil {
-		err := formatDateTime(param, &rem.AtTime, offset)
+		err := formatDateTime(param, &rem.AtTime, location)
 		if err != nil {
 			return err
 		}
@@ -214,7 +230,7 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		Created: time.Now().UTC(),
 	}
 
-	err = ParseAddCommand(m.Text, &rem, chat.UTCOffset, chat.IsJalali)
+	err = ParseAddCommand(m.Text, &rem, chat.Loc, chat.IsJalali)
 	if err == ErrInvalidEveryFormat {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/every_format"))
 		return
@@ -228,14 +244,15 @@ func (b *Bot) AddCommand(m *tb.Message) {
 
 	reply, err := b.Reply(m, tr.Lang(string(chat.Language)).Tr("adding_reminder"))
 
-	reminder, err := b.db.InsertReminder(rem)
+	rem, err = b.db.InsertReminder(rem)
 	if err != nil {
 		log.Println(err)
 	}
 
-	selector := createAlarmSelector(&reminder, chat.Language)
+	selector := createAlarmSelector(&rem, chat.Language)
 
 	var message string
+	loc, err := time.LoadLocation(chat.Loc)
 	if rem.IsRepeated {
 		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_repeat")
 		message = fmt.Sprintf(messageFormat, rem.Description, rem.Every)
@@ -243,10 +260,10 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_normal")
 
 		if chat.IsJalali {
-			jalaliTime, _ := jalaali.From(rem.AtTime).JFormat("Mon _2 Jan 06 | 15:04:05")
+			jalaliTime, _ := jalaali.From(rem.AtTime.In(loc)).JFormat("Mon _2 Jan 06 | 15:04:05")
 			message = fmt.Sprintf(messageFormat, rem.Description, jalaliTime)
 		} else {
-			message = fmt.Sprintf(messageFormat, rem.Description, rem.AtTime.Format("Mon _2 Jan 06 | 15:04:05"))
+			message = fmt.Sprintf(messageFormat, rem.Description, rem.AtTime.In(loc).Format("Mon _2 Jan 06 | 15:04:05"))
 		}
 
 	}

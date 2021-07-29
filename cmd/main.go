@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/psyg1k/remindertelbot/internal/bot"
 	"github.com/tucnak/tr"
+	tb "gopkg.in/tucnak/telebot.v2"
 	"log"
 )
 
@@ -20,5 +21,6 @@ func main() {
 	b.Handle("/add", b.AddCommand)
 	b.Handle("\f"+bot.LangCall, b.SetLanguage)
 	b.Handle("\f"+bot.TzCall, b.SetTz)
+	b.Handle(tb.OnQuery, b.Qtz)
 	b.Run()
 }

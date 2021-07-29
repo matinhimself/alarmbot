@@ -1,6 +1,9 @@
 package mongo
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"go.mongodb.org/mongo-driver/bson"
+	"time"
+)
 
 import "github.com/psyg1k/remindertelbot/internal"
 
@@ -12,14 +15,14 @@ func (db *Db) InsertUser(user internal.User) error {
 	return err
 }
 
-func (db *Db) UpdateUserTz(offset internal.Offset, userID int) error {
+func (db *Db) UpdateUserTz(location time.Location, userID int) error {
 	collection := db.usersCollection
 
 	filter := bson.D{{"_id", userID}}
 
 	update := bson.D{
 		{"$set", bson.D{
-			{"offset", offset},
+			{"offset", location},
 		}},
 	}
 

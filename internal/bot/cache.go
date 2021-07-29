@@ -8,7 +8,7 @@ import (
 
 type Cache interface {
 	GetUser(int) (internal.User, error)
-	UpdateChatTz(int64, internal.Offset) error
+	UpdateChatTz(int64, string) error
 	GetChat(int64) (internal.Chat, error)
 }
 
@@ -36,13 +36,13 @@ func (m MemCache) GetChat(chatID int64) (chat internal.Chat, err error) {
 	return val.(internal.Chat), nil
 }
 
-func (m MemCache) UpdateChatTz(chatID int64, offset internal.Offset) error {
+func (m MemCache) UpdateChatTz(chatID int64, location string) error {
 	val, ok := m[chatID]
 	if !ok {
 		return fmt.Errorf("chat not found")
 	}
 	chat := val.(internal.Chat)
-	chat.UTCOffset = offset
+	chat.Loc = location
 	m[chatID] = chat
 	return nil
 }
@@ -63,12 +63,8 @@ func (b *Bot) GetUser(userId int) (user internal.User, err error) {
 	return user, err
 }
 
-func (b *Bot) UpdateTz(chatId int64, tz internal.Offset) error {
-	err := b.Cache.UpdateChatTz(chatId, tz)
-	if err != nil {
-
-	}
-
-	err = b.db.UpdateChatTz(chatId, tz)
+func (b *Bot) UpdateTz(chatId int64, loc string) error {
+	err := b.Cache.UpdateChatTz(chatId, loc)
+	err = b.db.UpdateChatTz(chatId, loc)
 	return err
 }
