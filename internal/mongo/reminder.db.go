@@ -10,7 +10,11 @@ import (
 	"time"
 )
 
-func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
+func (db *Db) DeleteRemindersBefore(idh string, t time.Time) (int64, error) {
+	id, err := primitive.ObjectIDFromHex(idh)
+	if err != nil {
+		return 0, err
+	}
 	collection := db.remindersCollection
 
 	filter := bson.M{
@@ -34,24 +38,28 @@ func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
 	return dr.DeletedCount, err
 }
 
-func (db *Db) DeleteReminder(reminderID int64) error {
+func (db *Db) DeleteReminder(idh string) error {
+	id, err := primitive.ObjectIDFromHex(idh)
+	if err != nil {
+		return err
+	}
 	collection := db.remindersCollection
 
-	filter := bson.D{{"_id", reminderID}}
+	filter := bson.D{{"_id", id}}
 
-	_, err := collection.DeleteOne(nil, filter)
+	_, err = collection.DeleteOne(nil, filter)
 	return err
 }
 
-func (db *Db) GetReminder(id int64) (internal.Reminder, error) {
-	objId, _ := primitive.ObjectIDFromHex(fmt.Sprintf("%x", id))
+func (db *Db) GetReminder(idh string) (internal.Reminder, error) {
+	id, _ := primitive.ObjectIDFromHex(fmt.Sprintf(idh))
 
 	var reminder internal.Reminder
 
 	err := db.remindersCollection.FindOne(
 		context.TODO(),
 		bson.M{
-			"name": objId,
+			"name": id,
 		},
 	).Decode(&reminder)
 
@@ -106,33 +114,13 @@ func (db *Db) InsertReminder(r internal.Reminder) (internal.Reminder, error) {
 
 }
 
-type count struct {
-	Id   primitive.ObjectID `bson:"Id"`
-	Name string             `bson:"name"`
-	Seq  int64              `bson:"seq"`
-}
-
-func (db *Db) getNextSeq(name string) (int64, error) {
-	counter := db.CounterCollection
-
-	var c count
-	err := counter.FindOneAndUpdate(
-		nil,
-		bson.M{"name": name},
-		bson.M{
-			"$inc": bson.M{
-				"seq": 1,
-			},
-		},
-	).Decode(&c)
-
-	return c.Seq, err
-}
-
-func (db *Db) UpdatePriority(id int64, priority int8) error {
+func (db *Db) UpdatePriority(idh string, priority internal.Priority) error {
 
 	collection := db.remindersCollection
-
+	id, err := primitive.ObjectIDFromHex(idh)
+	if err != nil {
+		return err
+	}
 	filter := bson.D{{"_id", id}}
 
 	update := bson.D{
@@ -141,6 +129,6 @@ func (db *Db) UpdatePriority(id int64, priority int8) error {
 		}},
 	}
 
-	_, err := collection.UpdateOne(context.TODO(), filter, update)
+	_, err = collection.UpdateOne(context.TODO(), filter, update)
 	return err
 }

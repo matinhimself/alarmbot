@@ -10,10 +10,10 @@ import (
 )
 
 func StringHasSubmatch(s, sub string) bool {
-	if res := regexp.MustCompile(fmt.Sprintf(`\s%s\s`, sub)).FindStringSubmatch(s); len(res) == 0 {
-		return false
+	if res := regexp.MustCompile(fmt.Sprintf(`\s%s\s`, sub)).FindStringSubmatch(s); len(res) >= 1 {
+		return true
 	}
-	return true
+	return false
 }
 
 func GetParam(text string, flags ...string) (string, error) {

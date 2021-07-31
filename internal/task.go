@@ -50,20 +50,20 @@ func (r *Reminder) Validate() error {
 	return nil
 }
 
-const (
-	// Muted, alarms just in last tick
-	PriorityLow Priority = iota
-
-	PriorityHigh
-)
-
 type Priority int8
 
-func (p Priority) Validate() error {
-	switch p {
-	case PriorityLow, PriorityHigh:
-		return nil
+func (p Priority) ToString() string {
+	if p == Silent {
+		return "unmute"
+	} else {
+		return "mute"
 	}
+}
 
-	return fmt.Errorf("priority validation failed")
+func (p Priority) Not() Priority {
+	if p == Silent {
+		return Audible
+	} else {
+		return Silent
+	}
 }

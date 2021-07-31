@@ -125,7 +125,6 @@ func (b *Bot) Run() {
 }
 
 func (b *Bot) AddReminder(r *internal.Reminder) {
-	fmt.Printf("%v", r)
 	b.s.AddJob(r, r.AtTime, r.Every, r.From)
 }
 
