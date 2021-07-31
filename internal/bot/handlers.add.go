@@ -138,24 +138,16 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		log.Println(err)
 	}
 
-	selector := createAlarmSelector(&rem, chat.Language)
-
-	var message string
-	loc, err := time.LoadLocation(chat.Loc)
+	var format string
 	if rem.IsRepeated {
-		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_repeat")
-		message = fmt.Sprintf(messageFormat, rem.Description, rem.Every)
+		format = tr.Lang(string(chat.Language)).Tr("alarm/add_repeat")
 	} else {
-		messageFormat := tr.Lang(string(chat.Language)).Tr("alarm/add_normal")
-
-		if chat.IsJalali {
-			jalaliTime, _ := jalaali.From(rem.AtTime.In(loc)).JFormat("Mon _2 Jan 06 | 15:04:05")
-			message = fmt.Sprintf(messageFormat, rem.Description, jalaliTime)
-		} else {
-			message = fmt.Sprintf(messageFormat, rem.Description, rem.AtTime.In(loc).Format("Mon _2 Jan 06 | 15:04:05"))
-		}
-
+		format = tr.Lang(string(chat.Language)).Tr("alarm/add_normal")
 	}
+
+	selector := createAlarmSelector(&rem, chat.Language)
+	message := generateFirstAlarmMessage(format, &rem, chat)
+
 	_, _ = b.Edit(reply, message, selector)
 
 	b.AddReminder(&rem)
@@ -164,17 +156,64 @@ func (b *Bot) AddCommand(m *tb.Message) {
 func createAlarmSelector(rem *internal.Reminder, lang internal.Language) *tb.ReplyMarkup {
 	selector := &tb.ReplyMarkup{}
 
-	btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, fmt.Sprintf("%s", rem.Id.Hex()))
-
 	var btnSec tb.Btn
 	if rem.Priority == 0 {
 		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/unmute"), MuteCall, fmt.Sprintf("%s:%s", UnmuteUniqueData, rem.Id.Hex()))
 	} else {
 		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/mute"), MuteCall, fmt.Sprintf("%s:%s", MuteUniqueData, rem.Id.Hex()))
 	}
-	selector.Inline(
-		selector.Row(btnDlt, btnSec),
-	)
+
+	remaining := rem.AtTime.Sub(time.Now().UTC()).Round(rem.Every)
+	if remaining < time.Second {
+		btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, fmt.Sprintf("%s", rem.Id.Hex()))
+		selector.Inline(
+			selector.Row(btnDlt, btnSec),
+		)
+
+	} else {
+		selector.Inline(
+			selector.Row(btnSec),
+		)
+	}
 
 	return selector
+}
+
+func generateFirstAlarmMessage(format string, rem *internal.Reminder, chat internal.Chat) string {
+	loc, _ := time.LoadLocation(chat.Loc)
+	var t string
+
+	if rem.IsRepeated {
+		t = rem.Every.String()
+	} else {
+		if chat.IsJalali {
+			t, _ = jalaali.From(rem.AtTime.In(loc)).JFormat("Mon _2 Jan 06 | 15:04:05")
+		} else {
+			t = rem.AtTime.In(loc).Format("Mon _2 Jan 06 | 15:04:05")
+		}
+
+	}
+
+	return fmt.Sprintf(format, rem.Description, t)
+}
+
+func generateAlarmMessage(format string, rem *internal.Reminder, chat internal.Chat) string {
+	loc, _ := time.LoadLocation(chat.Loc)
+	t := time.Now().In(loc)
+	message := rem.Description
+
+	if rem.IsRepeated {
+		message = fmt.Sprintf(format, message, rem.Every.String())
+
+	} else {
+		remaining := rem.AtTime.Sub(t).Round(rem.Every)
+
+		remainingString := DurationToString(remaining)
+		emoji := selectEmoji(remaining)
+
+		message = fmt.Sprintf(format, message, remainingString, emoji)
+
+	}
+
+	return message
 }

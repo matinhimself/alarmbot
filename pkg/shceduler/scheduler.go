@@ -118,6 +118,7 @@ func (job *Job) PlanFirstRun() {
 		job.nextRun = job.from.Add(time.Duration(mod) * time.Second).Round(time.Second)
 
 	}
+	fmt.Println(time.Now().UTC().Sub(job.nextRun))
 }
 
 func (s *Scheduler) Start() {

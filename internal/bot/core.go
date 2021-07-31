@@ -157,10 +157,28 @@ func (b *Bot) Qtz(q *tb.Query) {
 	}
 }
 
-func (b *Bot) sendAlarm(r *internal.Reminder) {
-	fmt.Printf("%v", r.AtTime.Add(210*time.Minute))
-	_, err := b.Send(&tb.Chat{ID: r.ChatId}, "message")
-	if err != nil {
-		fmt.Println(err)
+func (b *Bot) sendAlarm(rem *internal.Reminder) {
+	chat, _ := b.GetChat(rem.ChatId)
+	selector := createAlarmSelector(rem, chat.Language)
+	var format string
+	if rem.IsRepeated {
+		format = tr.Lang(string(chat.Language)).Tr("alarm/repeat")
+	} else {
+		format = tr.Lang(string(chat.Language)).Tr("alarm/normal")
 	}
+	message := generateAlarmMessage(format, rem, chat)
+
+	if rem.Message != 0 {
+		_, err := b.Reply(&tb.Message{ID: rem.Message, Chat: &tb.Chat{ID: rem.ChatId}}, message, selector)
+		if err != nil {
+			message = fmt.Sprintf("%s\n%s", "__Description message deleted__", message)
+		} else {
+			return
+		}
+	}
+	_, err := b.Send(tb.ChatID(rem.ChatId), message, selector)
+	if err != nil {
+		log.Println(err)
+	}
+
 }

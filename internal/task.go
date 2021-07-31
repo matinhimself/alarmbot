@@ -36,6 +36,7 @@ var MaxTime = time.Unix(MaxTimeUnix, 0)
 
 func WithRepeat(rem *Reminder) *Reminder {
 	rem.AtTime = time.Unix(MaxTimeUnix<<1, 0)
+	rem.IsRepeated = true
 	return rem
 }
 

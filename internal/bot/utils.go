@@ -112,3 +112,52 @@ func stringToParams(dateString string) (int, time.Month, int, error) {
 
 	return year, time.Month(month), day, nil
 }
+
+func DurationToString(d time.Duration) string {
+	var message string
+
+	total := int(d.Seconds())
+	days := total / (60 * 60 * 24)
+	hours := total / (60 * 60) % 24
+	minutes := total / 60 % 60
+	seconds := total % 60
+
+	switch {
+	case days > 0:
+		message = fmt.Sprintf("%s%dd ", message, days)
+		fallthrough
+	case hours > 0:
+		message = fmt.Sprintf("%s%dh ", message, hours)
+		fallthrough
+	case minutes > 0:
+		message = fmt.Sprintf("%s%02dm ", message, minutes)
+		fallthrough
+	case seconds > 0:
+		message = fmt.Sprintf("%s%02ds", message, seconds)
+
+	default:
+		message = fmt.Sprintf("%s%s", message, "RIGHT NOW")
+
+	}
+
+	return message
+}
+
+func selectEmoji(d time.Duration) rune {
+	var emoji rune
+
+	switch {
+	case d.Seconds() > (72 * time.Hour).Seconds():
+		emoji = '💠'
+	case d.Seconds() > (48 * time.Hour).Seconds():
+		emoji = '❇'
+	case d.Seconds() > (24 * time.Hour).Seconds():
+		emoji = '⚠'
+	case d.Seconds() > (8 * time.Hour).Seconds():
+		emoji = '🛑'
+	default:
+		emoji = '🆘'
+	}
+
+	return emoji
+}
