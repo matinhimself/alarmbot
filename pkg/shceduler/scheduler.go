@@ -38,7 +38,7 @@ func NewJob(atTime time.Time, every time.Duration, from time.Time, data G) *Job 
 }
 
 func (job *Job) IsTime() bool {
-	return !job.passed && !time.Now().UTC().Before(job.nextRun)
+	return !job.passed && time.Now().UTC().After(job.nextRun)
 }
 
 func (s *Scheduler) Delete(index int) error {
@@ -62,6 +62,7 @@ func (s *Scheduler) DeleteByIdentifier(id string) error {
 }
 
 type Scheduler struct {
+	lock          bool
 	jobs          []*Job
 	ticker        *time.Ticker
 	passedChannel chan interface{}
@@ -77,7 +78,12 @@ func (s *Scheduler) GetJobData(identifier string) (G, bool) {
 }
 
 func NewScheduler(ticker *time.Ticker, passedChannel chan interface{}) *Scheduler {
-	return &Scheduler{ticker: ticker, passedChannel: passedChannel}
+	return &Scheduler{
+		lock:          false,
+		jobs:          nil,
+		ticker:        ticker,
+		passedChannel: passedChannel,
+	}
 }
 
 func (s *Scheduler) AddJob(data G, atTime time.Time, every time.Duration,
@@ -118,12 +124,15 @@ func (job *Job) PlanFirstRun() {
 		job.nextRun = job.from.Add(time.Duration(mod) * time.Second).Round(time.Second)
 
 	}
-	fmt.Println(time.Now().UTC().Sub(job.nextRun))
 }
 
 func (s *Scheduler) Start() {
 	for range s.ticker.C {
 		for i := 0; i < len(s.jobs); i++ {
+			if s.lock {
+				break
+			}
+			s.lock = true
 			if s.jobs[i].passed {
 				_ = s.Delete(i)
 			} else if s.jobs[i].IsTime() {
@@ -131,6 +140,7 @@ func (s *Scheduler) Start() {
 				s.jobs[i].lastRun = s.jobs[i].nextRun
 				s.jobs[i].PlanNext()
 			}
+			s.lock = false
 		}
 	}
 }

@@ -17,7 +17,7 @@ type Reminder struct {
 
 	Created    time.Time `bson:"created"`
 	IsRepeated bool      `bson:"is_repeated"`
-	Priority   int8      `bson:"priority"`
+	Priority   Priority  `bson:"priority"`
 
 	ChatId  int64 `bson:"chat_id"`
 	Message int   `bson:"description"`

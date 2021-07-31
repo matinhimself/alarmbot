@@ -145,7 +145,7 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		format = tr.Lang(string(chat.Language)).Tr("alarm/add_normal")
 	}
 
-	selector := createAlarmSelector(&rem, chat.Language)
+	selector := createAlarmSelector(&rem, chat.Language, true, true)
 	message := generateFirstAlarmMessage(format, &rem, chat)
 
 	_, _ = b.Edit(reply, message, selector)
@@ -153,18 +153,18 @@ func (b *Bot) AddCommand(m *tb.Message) {
 	b.AddReminder(&rem)
 }
 
-func createAlarmSelector(rem *internal.Reminder, lang internal.Language) *tb.ReplyMarkup {
+func createAlarmSelector(rem *internal.Reminder, lang internal.Language, forceDelete bool, forceMute bool) *tb.ReplyMarkup {
 	selector := &tb.ReplyMarkup{}
 
 	var btnSec tb.Btn
-	if rem.Priority == 0 {
+	if rem.Priority == 0 && forceMute {
 		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/unmute"), MuteCall, fmt.Sprintf("%s:%s", UnmuteUniqueData, rem.Id.Hex()))
-	} else {
+	} else if forceMute {
 		btnSec = selector.Data(tr.Lang(string(lang)).Tr("buttons/mute"), MuteCall, fmt.Sprintf("%s:%s", MuteUniqueData, rem.Id.Hex()))
 	}
 
 	remaining := rem.AtTime.Sub(time.Now().UTC()).Round(rem.Every)
-	if remaining < time.Second {
+	if remaining < time.Second || forceDelete {
 		btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, fmt.Sprintf("%s", rem.Id.Hex()))
 		selector.Inline(
 			selector.Row(btnDlt, btnSec),

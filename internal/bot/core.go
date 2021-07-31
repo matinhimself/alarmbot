@@ -159,7 +159,14 @@ func (b *Bot) Qtz(q *tb.Query) {
 
 func (b *Bot) sendAlarm(rem *internal.Reminder) {
 	chat, _ := b.GetChat(rem.ChatId)
-	selector := createAlarmSelector(rem, chat.Language)
+
+	var selector *tb.ReplyMarkup
+	if rem.AtTime.Before(time.Now().UTC()) {
+		selector = createAlarmSelector(rem, chat.Language, true, false)
+	} else {
+		selector = createAlarmSelector(rem, chat.Language, false, true)
+	}
+
 	var format string
 	if rem.IsRepeated {
 		format = tr.Lang(string(chat.Language)).Tr("alarm/repeat")
@@ -181,4 +188,16 @@ func (b *Bot) sendAlarm(rem *internal.Reminder) {
 		log.Println(err)
 	}
 
+}
+
+func (b *Bot) updateReminderPriority(id string, p internal.Priority) error {
+	err := b.db.UpdatePriority(id, p)
+	if err != nil {
+		return err
+	}
+	data, found := b.s.GetJobData(id)
+	if found {
+		data.(*internal.Reminder).Priority = p
+	}
+	return nil
 }

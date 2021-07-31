@@ -86,9 +86,9 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 
 	selector.Inline(rows...)
 
-	err := b.db.UpdatePriority(id, p)
+	err := b.updateReminderPriority(id, p)
 	if err != nil {
-		log.Println("ToggleMute", err)
+		log.Println(err)
 		return
 	}
 
