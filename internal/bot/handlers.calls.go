@@ -32,7 +32,7 @@ func extractId(s string) (internal.Priority, string, error) {
 	return p, d[1], nil
 }
 
-func updateInlineMenuMute(menu [][]tb.InlineButton, p internal.Priority, selector *tb.ReplyMarkup, language internal.Language) *[][]tb.Btn {
+func updateInlineMenuMute(menu [][]tb.InlineButton, selector *tb.ReplyMarkup, language internal.Language) *[][]tb.Btn {
 	buttons := make([][]tb.Btn, len(menu))
 	for i := range buttons {
 		buttons[i] = make([]tb.Btn, len(menu[i]))
@@ -78,7 +78,7 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 		p = internal.Audible
 	}
 	selector := &tb.ReplyMarkup{}
-	buttons := updateInlineMenuMute(c.Message.ReplyMarkup.InlineKeyboard, p, selector, chat.Language)
+	buttons := updateInlineMenuMute(c.Message.ReplyMarkup.InlineKeyboard, selector, chat.Language)
 	rows := make([]tb.Row, 0)
 	for _, button := range *buttons {
 		rows = append(rows, button)
@@ -98,4 +98,15 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 		CallbackID: c.ID,
 		Text:       fmt.Sprintf("%s", tr.Lang(string(chat.Language)).Tr(fmt.Sprintf("buttons/%sd", (p.Not()).ToString()))),
 	})
+}
+
+func (b *Bot) DeleteReminder(c *tb.Callback) {
+	rem := c.Data
+
+	err := b.db.DeleteReminder(rem)
+	if err != nil {
+		log.Printf("delete remidner %s, %s", rem, err)
+	}
+
+	_, _ = b.Edit(c.Message, fmt.Sprintf("%s\n\n*Reminder deleted ❌*", c.Message.Text))
 }
