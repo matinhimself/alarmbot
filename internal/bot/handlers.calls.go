@@ -96,7 +96,7 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 
 	_ = b.Respond(c, &tb.CallbackResponse{
 		CallbackID: c.ID,
-		Text:       fmt.Sprintf("%s", tr.Lang(string(chat.Language)).Tr(fmt.Sprintf("buttons/%sd", (p.Not()).ToString()))),
+		Text:       tr.Lang(string(chat.Language)).Tr(fmt.Sprintf("buttons/%sd", (p.Not()).ToString())),
 	})
 }
 

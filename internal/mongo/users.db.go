@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
@@ -10,7 +11,7 @@ import "github.com/psyg1k/remindertelbot/internal"
 func (db *Db) InsertUser(user internal.User) error {
 	collection := db.usersCollection
 
-	_, err := collection.InsertOne(nil, user)
+	_, err := collection.InsertOne(context.TODO(), user)
 
 	return err
 }
@@ -26,7 +27,7 @@ func (db *Db) UpdateUserTz(location time.Location, userID int) error {
 		}},
 	}
 
-	_, err := collection.UpdateOne(nil, filter, update)
+	_, err := collection.UpdateOne(context.TODO(), filter, update)
 	return err
 }
 
@@ -41,7 +42,7 @@ func (db *Db) UpdateLanguage(lang internal.Language, chatId int64) error {
 		}},
 	}
 
-	_, err := collection.UpdateOne(nil, filter, update)
+	_, err := collection.UpdateOne(context.TODO(), filter, update)
 	return err
 }
 
@@ -49,7 +50,7 @@ func (db *Db) GetUser(id int) (u internal.User, err error) {
 	collection := db.usersCollection
 
 	filter := bson.D{{"_id", id}}
-	err = collection.FindOne(nil, filter).Decode(&u)
+	err = collection.FindOne(context.TODO(), filter).Decode(&u)
 	if err != nil {
 		return u, err
 	}

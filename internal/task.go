@@ -34,10 +34,9 @@ const MaxTimeUnix = 1 << 34 // "github.com/jalaali/go-jalaali" for reasons
 
 var MaxTime = time.Unix(MaxTimeUnix, 0)
 
-func WithRepeat(rem *Reminder) *Reminder {
+func WithRepeat(rem *Reminder) {
 	rem.AtTime = time.Unix(MaxTimeUnix<<1, 0)
 	rem.IsRepeated = true
-	return rem
 }
 
 func (r *Reminder) GetIdentifier() string {

@@ -16,8 +16,6 @@ type Job struct {
 	lastRun time.Time
 	nextRun time.Time
 
-	loc *time.Location
-
 	data G
 
 	passed    bool

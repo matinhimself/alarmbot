@@ -11,6 +11,7 @@ type Cache interface {
 	UpdateChatTz(int64, string) error
 	UpdateChatCal(int64, bool) error
 	GetChat(int64) (internal.Chat, error)
+	UpdateChatTaskList(int64, int) error
 }
 
 var NotFoundError = errors.New("not found")
@@ -47,6 +48,16 @@ func (m MemCache) UpdateChatTz(chatID int64, location string) error {
 	m[chatID] = chat
 	return nil
 }
+func (m MemCache) UpdateChatTaskList(id int64, mId int) error {
+	val, ok := m[id]
+	if !ok {
+		return fmt.Errorf("chat not found")
+	}
+	chat := val.(internal.Chat)
+	chat.TaskList = mId
+	m[id] = chat
+	return nil
+}
 
 func (m MemCache) UpdateChatCal(chatID int64, isJalali bool) error {
 	val, ok := m[chatID]
@@ -76,13 +87,13 @@ func (b *Bot) GetUser(userId int) (user internal.User, err error) {
 }
 
 func (b *Bot) UpdateTz(chatId int64, loc string) error {
-	err := b.Cache.UpdateChatTz(chatId, loc)
-	err = b.db.UpdateChatTz(chatId, loc)
+	_ = b.Cache.UpdateChatTz(chatId, loc)
+	err := b.db.UpdateChatTz(chatId, loc)
 	return err
 }
 
 func (b *Bot) UpdateCal(chatId int64, isJalali bool) error {
-	err := b.Cache.UpdateChatCal(chatId, isJalali)
-	err = b.db.UpdateChatCal(chatId, isJalali)
+	_ = b.Cache.UpdateChatCal(chatId, isJalali)
+	err := b.db.UpdateChatCal(chatId, isJalali)
 	return err
 }

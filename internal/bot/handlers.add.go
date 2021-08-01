@@ -14,7 +14,7 @@ import (
 
 func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bool, loc *time.Location) error {
 	if strings.ToLower(parts[0]) == "repeat" {
-		rem = internal.WithRepeat(rem)
+		internal.WithRepeat(rem)
 		return nil
 	}
 
@@ -132,7 +132,7 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		return
 	}
 
-	reply, err := b.Reply(m, tr.Lang(string(chat.Language)).Tr("adding_reminder"))
+	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("adding_reminder"))
 
 	rem, err = b.db.InsertReminder(rem)
 	if err != nil {
@@ -166,7 +166,7 @@ func createAlarmSelector(rem *internal.Reminder, lang internal.Language, forceDe
 
 	remaining := rem.AtTime.Sub(time.Now().UTC()).Round(rem.Every)
 	if remaining < time.Second || forceDelete {
-		btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, fmt.Sprintf("%s", rem.Id.Hex()))
+		btnDlt := selector.Data(tr.Lang(string(lang)).Tr("buttons/delete"), DeleteAlarmCall, rem.Id.Hex())
 		selector.Inline(
 			selector.Row(btnDlt, btnSec),
 		)

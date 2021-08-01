@@ -15,8 +15,7 @@ import (
 
 type Bot struct {
 	*tb.Bot
-	db  *m.Db
-	log *log.Logger
+	db *m.Db
 
 	s         *sc.Scheduler
 	alarmChan chan interface{}
@@ -111,13 +110,11 @@ func (b *Bot) Run() {
 	log.Println("Reminders loaded successfully")
 
 	log.Println("Start listening to alarm channel")
-	for {
-		select {
-		case alarm := <-b.alarmChan:
-			r := alarm.(*internal.Reminder)
-			if r.Priority != 0 || r.AtTime.Unix() < time.Now().Unix() {
-				b.sendAlarm(r)
-			}
+
+	for alarm := range b.alarmChan {
+		r := alarm.(*internal.Reminder)
+		if r.Priority != 0 || r.AtTime.Unix() < time.Now().Unix() {
+			b.sendAlarm(r)
 		}
 	}
 
@@ -129,7 +126,7 @@ func (b *Bot) AddReminder(r *internal.Reminder) {
 
 func (b *Bot) Qtz(q *tb.Query) {
 	results := make(tb.Results, 0)
-	var c int = 0
+	var c = 0
 	for _, url := range tzs {
 		if s := strings.Split(url, "/"); strings.HasPrefix(strings.ToLower(s[len(s)-1]), q.Text) {
 			c++

@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	"github.com/psyg1k/remindertelbot/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -29,7 +28,7 @@ func (db *Db) DeleteRemindersBefore(idh string, t time.Time) (int64, error) {
 		},
 	}
 
-	dr, err := collection.DeleteMany(nil, filter)
+	dr, err := collection.DeleteMany(context.TODO(), filter)
 
 	if err != nil {
 		return 0, err
@@ -45,14 +44,14 @@ func (db *Db) DeleteReminder(idh string) error {
 	}
 	collection := db.remindersCollection
 
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{primitive.E{Key: "_id", Value: id}}
 
-	_, err = collection.DeleteOne(nil, filter)
+	_, err = collection.DeleteOne(context.TODO(), filter)
 	return err
 }
 
 func (db *Db) GetReminder(idh string) (internal.Reminder, error) {
-	id, _ := primitive.ObjectIDFromHex(fmt.Sprintf(idh))
+	id, _ := primitive.ObjectIDFromHex(idh)
 
 	var reminder internal.Reminder
 
@@ -75,19 +74,18 @@ func (db *Db) GetRemindersByChatID(chatId int64) (reminders []internal.Reminder,
 	reminders = make([]internal.Reminder, 0)
 
 	collection := db.remindersCollection
-
 	// Sort by
-	findOptions := options.Find().SetSort(bson.D{{"time", 1}})
+	findOptions := options.Find().SetSort(primitive.E{Key: "time", Value: 1})
 
-	filter := bson.D{{"chat_id", chatId}}
+	filter := bson.D{primitive.E{Key: "chat_id", Value: chatId}}
 
-	cur, err := collection.Find(nil, filter, findOptions)
+	cur, err := collection.Find(context.TODO(), filter, findOptions)
 
 	if err != nil {
 		return reminders, err
 	}
 
-	for cur.Next(nil) {
+	for cur.Next(context.TODO()) {
 		var reminder internal.Reminder
 
 		err := cur.Decode(&reminder)
@@ -104,7 +102,7 @@ func (db *Db) InsertReminder(r internal.Reminder) (internal.Reminder, error) {
 
 	collection := db.remindersCollection
 
-	one, err := collection.InsertOne(nil, r)
+	one, err := collection.InsertOne(context.TODO(), r)
 	if err != nil {
 		return internal.Reminder{}, err
 	}
@@ -121,7 +119,7 @@ func (db *Db) UpdatePriority(idh string, priority internal.Priority) error {
 	if err != nil {
 		return err
 	}
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{primitive.E{Key: "_id", Value: id}}
 
 	update := bson.D{
 		{"$set", bson.D{

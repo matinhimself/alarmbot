@@ -22,6 +22,7 @@ const (
 	UnmuteUniqueData = "unmute"
 
 	SetTimeZoneCommand = "/settz"
+	InitTaskList       = "/tasklist"
 	AddReminderCommand = "/add"
 
 	DefaultEvery        = time.Hour * 12
@@ -34,6 +35,23 @@ var ErrInvalidEveryFormat = errors.New("invalid every format")
 var ErrInvalidTz = errors.New("invalid_timezone")
 var InvalidCommand = errors.New("invalid command")
 var InvalidTimeFormat = errors.New("invalid time format")
+
+func (b *Bot) InitTaskList(m *tb.Message) {
+	chat, _ := b.GetChat(m.Chat.ID)
+	err := b.updateChatTaskList(m.Chat.ID, m.ID)
+	if err != nil {
+		log.Println(err)
+	}
+
+	_, _ = b.Reply(m, tr.Lang(string(chat.Language)).Tr("task_list_registered"))
+
+}
+
+func (b *Bot) updateChatTaskList(id int64, id2 int) error {
+	_ = b.Cache.UpdateChatTaskList(id, id2)
+	err := b.db.UpdateChatTaskList(id, id2)
+	return err
+}
 
 func (b *Bot) HandleError(m *tb.Message, s string) {
 	_, _ = b.Reply(m, s)

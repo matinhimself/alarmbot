@@ -102,5 +102,5 @@ func (b *Bot) ChooseCal(call *tb.Callback) {
 
 	_ = b.UpdateCal(call.Message.Chat.ID, isHijri)
 
-	b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("registered"))
+	_, _ = b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("registered"))
 }
