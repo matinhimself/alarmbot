@@ -20,7 +20,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54118320-b7a4-4fc3-aebc-a3b667261c82" name="Default Changelist" comment="add fandogh deploy action">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/fandogh.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/fandogh.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +38,7 @@
   <component name="GOROOT" path="C:\Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
@@ -194,14 +196,18 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1877" height="348" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1627753577534" />
+    <state x="598" y="281" key="MultipleFileMergeDialog" timestamp="1627812402184">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="598" y="281" key="MultipleFileMergeDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1627812402184" />
     <state x="461" y="171" key="SettingsEditor" timestamp="1627809667071">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="461" y="171" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1627809667071" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1627811990020">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1627812537788">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1627811990020" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1627812537788" />
     <state x="777" y="434" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1627809681928">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
