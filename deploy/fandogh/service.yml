@@ -1,0 +1,11 @@
+kind: ExternalService
+name: reminder
+spec:
+  allow_http: true
+  image: ${IMAGE_URL}:${TAG}
+  image_pull_policy: IfNotPresent
+  path: /
+  port: 80
+  replicas: 1
+  resources:
+    memory: 200Mi

@@ -1,0 +1,23 @@
+name: Deploy
+on:
+    push:
+      tags:
+        - v*
+      branches:
+        - main
+        - master
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: deploy action step
+        uses: Glyphack/fandogh-service-deploy-action@v1
+        with:
+          username: ${{ secrets.FANDOGH_USERNAME }}
+          password: ${{ secrets.FANDOGH_PASSWORD }}
+          image_name: alarmbot
+          image_version: $(date +%s)
+          path_to_service_file: ./deploy/service.yml
