@@ -77,3 +77,19 @@ func (db *Db) UpdateChatTz(chatId int64, location string) error {
 	_, err := collection.UpdateOne(nil, filter, update)
 	return err
 }
+
+func (db *Db) UpdateChatCal(chatId int64, isJalali bool) error {
+
+	collection := db.chatsCollection
+
+	filter := bson.D{{"_id", chatId}}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"is_jalali", isJalali},
+		}},
+	}
+
+	_, err := collection.UpdateOne(nil, filter, update)
+	return err
+}

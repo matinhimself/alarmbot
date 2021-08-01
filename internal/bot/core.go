@@ -24,9 +24,8 @@ type Bot struct {
 }
 
 const (
-	MongoKey           = "MONGO_URI"
-	TokenKey           = "BOT_TOKEN"
-	SetTimeZoneCommand = "/settz"
+	MongoKey = "MONGO_URI"
+	TokenKey = "BOT_TOKEN"
 )
 
 func setDataBase() (*m.Db, error) {

@@ -56,6 +56,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 		return InvalidCommand
 	}
 
+	// Parse Command Parameters, Time/duration/repeat
 	err = ParseParam(parts[1:], rem, t, isJalali, location)
 	if err != nil {
 		return err

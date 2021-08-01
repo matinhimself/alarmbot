@@ -17,6 +17,11 @@ const (
 	IRAN = "Asia/Tehran"
 )
 
+const (
+	GeoCal   = "gregorian"
+	HijriCal = "hijri"
+)
+
 var Languages = [...]Language{
 	Language(FARSI),
 	Language(ENGLISH),

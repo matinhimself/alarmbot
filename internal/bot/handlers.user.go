@@ -38,7 +38,14 @@ func (b *Bot) SetTz(c *tb.Callback) {
 	if err != nil {
 		log.Println(err)
 	}
-	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("registered"))
+
+	selector := &tb.ReplyMarkup{}
+	selector.Inline(
+		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/gregorian"), CalCall, internal.GeoCal)),
+		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/hijri"), CalCall, internal.HijriCal)),
+	)
+
+	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("choose_cal"), selector)
 }
 
 func (b *Bot) SetLanguage(call *tb.Callback) {
@@ -82,4 +89,18 @@ func (b *Bot) ChooseLang(message *tb.Message) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func (b *Bot) ChooseCal(call *tb.Callback) {
+	chat, _ := b.GetChat(call.Message.Chat.ID)
+	var isHijri bool
+	if call.Data == internal.HijriCal {
+		isHijri = true
+	} else {
+		isHijri = false
+	}
+
+	_ = b.UpdateCal(call.Message.Chat.ID, isHijri)
+
+	b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("registered"))
 }

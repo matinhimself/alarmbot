@@ -16,9 +16,13 @@ const (
 	TzCall          = "tz"
 	DeleteAlarmCall = "del"
 	MuteCall        = "p"
+	CalCall         = "call"
 
 	MuteUniqueData   = "mute"
 	UnmuteUniqueData = "unmute"
+
+	SetTimeZoneCommand = "/settz"
+	AddReminderCommand = "/add"
 
 	DefaultEvery        = time.Hour * 12
 	DefaultFromDuration = time.Hour * 72
