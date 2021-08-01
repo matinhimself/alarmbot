@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/psyg1k/remindertelbot/internal/bot"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
