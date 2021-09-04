@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/jalaali/go-jalaali"
 	"github.com/psyg1k/remindertelbot/internal"
+	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -102,6 +102,20 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 
 }
 
+func (b *Bot) HelpCommand(m *tb.Message) {
+	c, err := b.GetChat(m.Chat.ID)
+	var message string
+	if err != nil {
+		message = tr.Lang("en").Tr("commands/help")
+	} else {
+		message = tr.Lang(string(c.Language)).Tr("commands/help")
+	}
+	_, err = b.Reply(m, message)
+	if err != nil {
+		log.Error(err)
+	}
+}
+
 func (b *Bot) AddCommand(m *tb.Message) {
 	var msg int
 	if m.IsReply() {
@@ -110,8 +124,10 @@ func (b *Bot) AddCommand(m *tb.Message) {
 
 	chat, err := b.GetChat(m.Chat.ID)
 	if err != nil {
-		log.Printf("%v %v", err, m.Chat)
+		log.WithField("chat", m.Chat.ID).Errorf("%v", err)
 	}
+
+	log.WithField("chat", m.Chat.ID).Info("Adding reminder")
 	rem := internal.Reminder{
 		Message: msg,
 		ChatId:  m.Chat.ID,
@@ -132,12 +148,20 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		return
 	}
 
-	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("adding_reminder"))
+	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("commands/adding_reminder"))
 
 	rem, err = b.db.InsertReminder(rem)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
+		return
 	}
+
+	log.WithFields(map[string]interface{}{
+		"for":   rem.AtTime,
+		"every": rem.Every,
+		"from":  rem.From,
+		"chat":  rem.ChatId,
+	}).Info("Reminder added to database.")
 
 	var format string
 	if rem.IsRepeated {
@@ -209,7 +233,10 @@ func generateAlarmMessage(format string, rem *internal.Reminder, chat internal.C
 	} else {
 		remaining := rem.AtTime.Sub(t).Round(rem.Every)
 
-		remainingString := DurationToString(remaining)
+		remainingString, now := DurationToString(remaining)
+		if now {
+			remainingString = tr.Lang(string(chat.Language)).Tr("alarm/now")
+		}
 		emoji := selectEmoji(remaining)
 
 		message = fmt.Sprintf(format, message, remainingString, emoji)

@@ -2,9 +2,9 @@ package bot
 
 import (
 	"github.com/psyg1k/remindertelbot/internal"
+	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
 	"strings"
 	"time"
 )
@@ -25,7 +25,7 @@ func (b *Bot) SetTzCommand(m *tb.Message) {
 	if err != nil {
 		log.Println(err)
 	}
-	_, _ = b.Reply(m, tr.Lang(string(chat.Language)).Tr("tz_changed"))
+	_, _ = b.Reply(m, tr.Lang(string(chat.Language)).Tr("responds/tz_changed"))
 }
 
 func (b *Bot) SetTz(c *tb.Callback) {
@@ -45,7 +45,7 @@ func (b *Bot) SetTz(c *tb.Callback) {
 		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/hijri"), CalCall, internal.HijriCal)),
 	)
 
-	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("choose_cal"), selector)
+	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("commands/choose_cal"), selector)
 }
 
 func (b *Bot) SetLanguage(call *tb.Callback) {
@@ -68,13 +68,14 @@ func (b *Bot) SetLanguage(call *tb.Callback) {
 	selector.Inline(
 		selector.Row(selector.Data("Iran", TzCall, internal.IRAN)),
 	)
-	_, err = b.Edit(call.Message, tr.Lang(string(lang)).Tr("choose_region"), selector)
+	_, err = b.Edit(call.Message, tr.Lang(string(lang)).Tr("commands/choose_region"), selector)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 func (b *Bot) ChooseLang(message *tb.Message) {
+	log.Infof("Choosing lang by user %d ", message.Chat.ID)
 	selector := &tb.ReplyMarkup{}
 
 	var langRows []tb.Row
@@ -85,7 +86,7 @@ func (b *Bot) ChooseLang(message *tb.Message) {
 
 	selector.Inline(langRows...)
 
-	_, err := b.Reply(message, tr.Tr("choose_lang"), selector)
+	_, err := b.Reply(message, tr.Tr("commands/choose_lang"), selector)
 	if err != nil {
 		log.Println(err)
 	}
@@ -102,5 +103,5 @@ func (b *Bot) ChooseCal(call *tb.Callback) {
 
 	_ = b.UpdateCal(call.Message.Chat.ID, isHijri)
 
-	_, _ = b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("registered"))
+	_, _ = b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("responds/registered"))
 }

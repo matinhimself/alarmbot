@@ -18,13 +18,20 @@ func main() {
 	b := bot.NewBot()
 	initTr()
 	b.Handle("/start", b.Entry)
+	b.Handle(bot.HelpCommand, b.HelpCommand)
 	b.Handle(bot.SetTimeZoneCommand, b.SetTzCommand)
 	b.Handle(bot.AddReminderCommand, b.AddCommand)
+
 	b.Handle("\f"+bot.LangCall, b.SetLanguage)
 	b.Handle("\f"+bot.DeleteAlarmCall, b.DeleteReminder)
 	b.Handle("\f"+bot.MuteCall, b.ToggleMute)
 	b.Handle("\f"+bot.TzCall, b.SetTz)
 	b.Handle("\f"+bot.CalCall, b.ChooseCal)
+	b.Handle("\f"+bot.UpdateCall, b.UpdateTaskListCall)
+	b.Handle("\f"+bot.ReformCall, b.ReformatTaskList)
+	b.Handle("\f"+bot.ClearCall, b.ClearTaskList)
+
+	b.Handle(bot.InitTaskList, b.InitTaskList)
 	b.Handle(tb.OnQuery, b.Qtz)
 	b.Run()
 }

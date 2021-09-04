@@ -98,8 +98,8 @@ func stringToDate(dateString string, loc *time.Location) (time.Time, error) {
 func stringToParams(dateString string) (int, time.Month, int, error) {
 	var year, day int
 
-	yyyyMmDd := regexp.MustCompile(`(?P<year>\d{4})[-/,](?P<month>\d{2})[-/,](?P<day>\d{2})`)
-	ddMmYyyy := regexp.MustCompile(`(?P<day>\d{2})[-/,](?P<month>\d{2})[-/,](?P<year>\d{4})`)
+	yyyyMmDd := regexp.MustCompile(`(?P<year>\d{4})[-/,](?P<month>\d{1,2})[-/,](?P<day>\d{1,2})`)
+	ddMmYyyy := regexp.MustCompile(`(?P<day>\d{1,2})[-/,](?P<month>\d{1,2})[-/,](?P<year>\d{4})`)
 
 	hm, err := matchRegexAlt(dateString, yyyyMmDd, ddMmYyyy)
 	if err != nil {
@@ -113,7 +113,7 @@ func stringToParams(dateString string) (int, time.Month, int, error) {
 	return year, time.Month(month), day, nil
 }
 
-func DurationToString(d time.Duration) string {
+func DurationToString(d time.Duration) (string, bool) {
 	var message string
 
 	total := int(d.Seconds())
@@ -136,11 +136,11 @@ func DurationToString(d time.Duration) string {
 		message = fmt.Sprintf("%s%02ds", message, seconds)
 
 	default:
-		message = fmt.Sprintf("%s%s", message, "RIGHT NOW")
+		return "", true
 
 	}
 
-	return message
+	return message, false
 }
 
 func selectEmoji(d time.Duration) rune {

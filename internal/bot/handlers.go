@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/psyg1k/remindertelbot/internal"
+	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	"go.mongodb.org/mongo-driver/mongo"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
 	"time"
 )
 
@@ -17,6 +17,9 @@ const (
 	DeleteAlarmCall = "del"
 	MuteCall        = "p"
 	CalCall         = "call"
+	UpdateCall      = "update"
+	ReformCall      = "reform"
+	ClearCall       = "clear"
 
 	MuteUniqueData   = "mute"
 	UnmuteUniqueData = "unmute"
@@ -24,6 +27,7 @@ const (
 	SetTimeZoneCommand = "/settz"
 	InitTaskList       = "/tasklist"
 	AddReminderCommand = "/add"
+	HelpCommand        = "/help"
 
 	DefaultEvery        = time.Hour * 12
 	DefaultFromDuration = time.Hour * 72
@@ -36,23 +40,6 @@ var ErrInvalidTz = errors.New("invalid_timezone")
 var InvalidCommand = errors.New("invalid command")
 var InvalidTimeFormat = errors.New("invalid time format")
 
-func (b *Bot) InitTaskList(m *tb.Message) {
-	chat, _ := b.GetChat(m.Chat.ID)
-	err := b.updateChatTaskList(m.Chat.ID, m.ID)
-	if err != nil {
-		log.Println(err)
-	}
-
-	_, _ = b.Reply(m, tr.Lang(string(chat.Language)).Tr("task_list_registered"))
-
-}
-
-func (b *Bot) updateChatTaskList(id int64, id2 int) error {
-	_ = b.Cache.UpdateChatTaskList(id, id2)
-	err := b.db.UpdateChatTaskList(id, id2)
-	return err
-}
-
 func (b *Bot) HandleError(m *tb.Message, s string) {
 	_, _ = b.Reply(m, s)
 }
@@ -64,10 +51,12 @@ func (b *Bot) HandleErrorErr(m *tb.Message, e error, lang internal.Language) {
 }
 
 func (b *Bot) Entry(m *tb.Message) {
-	_, err := b.db.GetChat(m.Chat.ID)
+	log.Infof("Entry called by user %d ", m.Chat.ID)
+	c, err := b.db.GetChat(m.Chat.ID)
+	log.Printf("%v", c)
 	if err == mongo.ErrNoDocuments {
 		b.ChooseLang(m)
 	} else if err != nil {
-		log.Println(err)
+		log.Infof("%v", err)
 	}
 }

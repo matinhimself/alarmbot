@@ -5,9 +5,11 @@ import (
 	"github.com/psyg1k/remindertelbot/internal"
 	m "github.com/psyg1k/remindertelbot/internal/mongo"
 	sc "github.com/psyg1k/remindertelbot/pkg/shceduler"
+	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -15,8 +17,7 @@ import (
 
 type Bot struct {
 	*tb.Bot
-	db *m.Db
-
+	db        *m.Db
 	s         *sc.Scheduler
 	alarmChan chan interface{}
 	Cache     Cache
@@ -27,6 +28,10 @@ const (
 	TokenKey = "BOT_TOKEN"
 )
 
+func (b *Bot) DeletePassedReminders(chatId int64) (deleted int64, err error) {
+	deleted, err = b.db.DeleteRemindersBefore(chatId, time.Now().UTC())
+	return
+}
 func setDataBase() (*m.Db, error) {
 	uri, ok := os.LookupEnv(MongoKey)
 	if !ok {
@@ -49,11 +54,14 @@ func setBot() (*tb.Bot, error) {
 		log.Fatal("couldn't find bot token in env variables")
 	}
 
-	b, err := tb.NewBot(tb.Settings{
-		Reporter: func(err error) {
-			log.Println(err.Error())
-		},
+	proxy_url, _ := url.Parse("http://127.0.0.1:9999")
 
+	b, err := tb.NewBot(tb.Settings{
+
+		//Reporter: func(err error) {
+		//	log.Println(err.Error())
+		//},
+		Client:    &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxy_url)}},
 		Token:     token,
 		Poller:    &tb.LongPoller{Timeout: 10 * time.Second},
 		ParseMode: tb.ModeMarkdown,
@@ -127,15 +135,15 @@ func (b *Bot) AddReminder(r *internal.Reminder) {
 func (b *Bot) Qtz(q *tb.Query) {
 	results := make(tb.Results, 0)
 	var c = 0
-	for _, url := range tzs {
-		if s := strings.Split(url, "/"); strings.HasPrefix(strings.ToLower(s[len(s)-1]), q.Text) {
+	for _, u := range tzs {
+		if s := strings.Split(u, "/"); strings.HasPrefix(strings.ToLower(s[len(s)-1]), q.Text) {
 			c++
 			result := &tb.ArticleResult{
 				Title:   s[len(s)-1],
-				Text:    fmt.Sprintf("%s %s", SetTimeZoneCommand, url),
+				Text:    fmt.Sprintf("%s %s", SetTimeZoneCommand, u),
 				HideURL: true,
 			}
-			result.SetResultID(url)
+			result.SetResultID(u)
 			results = append(results, result)
 		}
 		if c > 2 {
@@ -196,4 +204,11 @@ func (b *Bot) updateReminderPriority(id string, p internal.Priority) error {
 		data.(*internal.Reminder).Priority = p
 	}
 	return nil
+}
+
+func (b *Bot) updateChatTaskList(chat *internal.Chat, id2 int) error {
+	chat.TaskList = id2
+	_ = b.Cache.UpdateChatTaskList(chat.ChatID, id2)
+	err := b.db.UpdateChatTaskList(chat.ChatID, id2)
+	return err
 }

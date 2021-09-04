@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-func (db *Db) DeleteRemindersBefore(idh string, t time.Time) (int64, error) {
-	id, err := primitive.ObjectIDFromHex(idh)
-	if err != nil {
-		return 0, err
-	}
+func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
 	collection := db.remindersCollection
 
 	filter := bson.M{
@@ -75,7 +71,7 @@ func (db *Db) GetRemindersByChatID(chatId int64) (reminders []internal.Reminder,
 
 	collection := db.remindersCollection
 	// Sort by
-	findOptions := options.Find().SetSort(primitive.E{Key: "time", Value: 1})
+	findOptions := options.Find().SetSort(bson.D{{Key: "time", Value: 1}})
 
 	filter := bson.D{primitive.E{Key: "chat_id", Value: chatId}}
 

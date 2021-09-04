@@ -1,0 +1,30 @@
+Usage:
+/init - Registers chat tasks list
+
+/add <Duration/Date> - Adds a task
+ -f, -from  <Duration>
+ -e, -every <Duration>
+ -t, -time  <Time>
+ -m         "<String>"
+
+Duration Format:
+ let X be a Whole Num
+ Xs    => X Seconds
+ Xm    => X Minutes
+ Xh    => X Hours
+ Xd, X => X Days
+
+
+Date Format:
+ YYYY[-/,]MM[-/,]DD
+ DD[-/,]MM[-/,]YYYY
+
+Only jalaali(Persian) Date is acceptable for this bot:(
+
+Time Format
+ HH:MM
+ HH:MM:SS
+
+Example:
+ /add 1399/12/29 -m "egg"
+Will add a reminder for 1399/12/29 that will send an "egg" message as an Alarm every 12 Hours (By Default) for last 72 Hours (By Default).

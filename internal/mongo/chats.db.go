@@ -66,9 +66,8 @@ func (db *Db) UpdateChatTz(id int64, location string) error {
 	update := bson.D{
 		primitive.E{
 			Key: "$set",
-			Value: primitive.E{
-				Key:   "loc",
-				Value: location,
+			Value: primitive.M{
+				"loc": location,
 			},
 		},
 	}
@@ -85,11 +84,8 @@ func (db *Db) UpdateChatCal(id int64, isJalali bool) error {
 
 	update := bson.D{
 		primitive.E{
-			Key: "$set",
-			Value: primitive.E{
-				Key:   "is_jalali",
-				Value: isJalali,
-			},
+			Key:   "$set",
+			Value: bson.M{"is_jalali": isJalali},
 		},
 	}
 
@@ -105,11 +101,8 @@ func (db *Db) UpdateChatTaskList(id int64, messageId int) error {
 
 	update := bson.D{
 		primitive.E{
-			Key: "$set",
-			Value: primitive.E{
-				Key:   "task_list",
-				Value: messageId,
-			},
+			Key:   "$set",
+			Value: primitive.M{"task_list": messageId},
 		},
 	}
 

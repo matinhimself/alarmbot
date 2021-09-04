@@ -3,9 +3,9 @@ package bot
 import (
 	"fmt"
 	"github.com/psyg1k/remindertelbot/internal"
+	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
 	"strings"
 )
 
@@ -79,7 +79,7 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 	}
 	selector := &tb.ReplyMarkup{}
 	buttons := updateInlineMenuMute(c.Message.ReplyMarkup.InlineKeyboard, selector, chat.Language)
-	rows := make([]tb.Row, 0)
+	rows := make([]tb.Row, len(*buttons))
 	for _, button := range *buttons {
 		rows = append(rows, button)
 	}
@@ -101,12 +101,16 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 }
 
 func (b *Bot) DeleteReminder(c *tb.Callback) {
+	chat, err := b.GetChat(c.Message.Chat.ID)
+	if err != nil {
+		log.WithField("chat", c.Message.Chat.ID).Error("couldn't find chat ")
+	}
 	rem := c.Data
 
-	err := b.db.DeleteReminder(rem)
+	err = b.db.DeleteReminder(rem)
 	if err != nil {
 		log.Printf("delete remidner %s, %s", rem, err)
 	}
 
-	_, _ = b.Edit(c.Message, fmt.Sprintf("%s\n\n*Reminder deleted ❌*", c.Message.Text))
+	_, _ = b.Edit(c.Message, fmt.Sprintf("%s\n\n%s", c.Message.Text, tr.Lang(string(chat.Language)).Tr("alarm/deleted")))
 }
