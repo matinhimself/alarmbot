@@ -8,6 +8,8 @@ An easy way to manage tasks and reminders in telegram.
 - [x] daily reminders
 - [x] Tasklists
 
+### Cache service isn't correctly implemented yet, Current Cache interface has memmory leak 
+
 test previous version [here](https://t.me/unluckyafbot).
 
 test current version [here](https://t.me/stillunluckyafbot) (develop branch, automated deploy on every push).
