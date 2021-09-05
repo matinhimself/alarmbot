@@ -118,9 +118,6 @@ func (b *Bot) HelpCommand(m *tb.Message) {
 
 func (b *Bot) AddCommand(m *tb.Message) {
 	var msg int
-	if m.IsReply() {
-		msg = m.ReplyTo.ID
-	}
 
 	chat, err := b.GetChat(m.Chat.ID)
 	if err != nil {
@@ -147,8 +144,13 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/passed_time"))
 		return
 	}
-
 	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("commands/adding_reminder"))
+
+	if m.IsReply() {
+		rem.Message = m.ReplyTo.ID
+	} else {
+		rem.Message = reply.ID
+	}
 
 	rem, err = b.db.InsertReminder(rem)
 	if err != nil {

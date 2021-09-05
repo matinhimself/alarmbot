@@ -8,12 +8,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"strconv"
 	"time"
 )
 
 const DateFormat = "Mon _2 Jan 06"
 
 func (b *Bot) InitTaskList(m *tb.Message) {
+	isSuperGp := m.Chat.Type == tb.ChatSuperGroup
+
 	loge := log.WithField("chat", m.Chat.ID)
 	loge.Info("initializing chat task list")
 
@@ -35,11 +38,13 @@ func (b *Bot) InitTaskList(m *tb.Message) {
 		return
 	}
 
-	b.updateTaskList(&chat, msg, false, false)
+	b.updateTaskList(&chat, msg, false, false, isSuperGp)
 
 }
 
 func (b *Bot) UpdateTaskListCall(c *tb.Callback) {
+	isSuperGp := c.Message.Chat.Type == tb.ChatSuperGroup
+
 	chat, _ := b.GetChat(c.Message.Chat.ID)
 
 	ctx := context.Background()
@@ -48,22 +53,26 @@ func (b *Bot) UpdateTaskListCall(c *tb.Callback) {
 	if c.Data == "dur" {
 		isDur = true
 	}
-	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, false, isDur)
+	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, false, isDur, isSuperGp)
 	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responds/update")})
 }
 
 func (b *Bot) ReformatTaskList(c *tb.Callback) {
+	isSuperGp := c.Message.Chat.Type == tb.ChatSuperGroup
+
 	chat, _ := b.GetChat(c.Message.Chat.ID)
 	var isDur = true
 	if c.Data == "dur" {
 		isDur = false
 	}
-	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur)
+	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur, isSuperGp)
 	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responds/reformat")})
 
 }
 
 func (b *Bot) ClearTaskList(c *tb.Callback) {
+	isSuperGp := c.Message.Chat.Type == tb.ChatSuperGroup
+
 	chat, _ := b.GetChat(c.Message.Chat.ID)
 	var isDur = true
 	if c.Data == "dur" {
@@ -76,12 +85,12 @@ func (b *Bot) ClearTaskList(c *tb.Callback) {
 		_ = b.Respond(c, &tb.CallbackResponse{Text: "Error"})
 		return
 	}
-	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur)
+	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur, isSuperGp)
 	_ = b.Respond(c, &tb.CallbackResponse{Text: fmt.Sprintf(tr.Lang(string(chat.Language)).Tr("responds/clear"), deleted)})
 
 }
 
-func (b *Bot) updateTaskList(c *internal.Chat, taskList *tb.Message, reformat, isDur bool) {
+func (b *Bot) updateTaskList(c *internal.Chat, taskList *tb.Message, reformat, isDur, isSuperGp bool) {
 	reminders, err := b.db.GetRemindersByChatID(c.ChatID)
 
 	if err != nil {
@@ -91,7 +100,7 @@ func (b *Bot) updateTaskList(c *internal.Chat, taskList *tb.Message, reformat, i
 
 	// xor isdur based on reformat boolean
 	isDur = isDur != reformat
-	message := generateTaskListMessage(reminders, c, isDur)
+	message := generateTaskListMessage(reminders, c, isDur, isSuperGp)
 	selector := generateTasklistSelector(isDur, c)
 
 	_, err = b.Edit(taskList, message, selector)
@@ -123,7 +132,7 @@ func generateTasklistSelector(dur bool, c *internal.Chat) *tb.ReplyMarkup {
 	return selector
 }
 
-func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, isDur bool) string {
+func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, isDur, isSuperGp bool) string {
 
 	var message string
 	var t string
@@ -144,14 +153,19 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		if reminder.Description != "" {
 			reminder.Description = "*" + reminder.Description + "* "
 		}
+		var msg, link string
 
 		if isDur {
-			message = fmt.Sprintf("%s%d.%s",
-				message, i+1, reminderToStringDur(&reminder, loc, c.Language))
+			msg = reminderToStringDur(&reminder, loc, c.Language)
 		} else {
-			message = fmt.Sprintf("%s%d.%s",
-				message, i+1, reminderToStringDate(&reminder, loc, c.Language, c.IsJalali))
+			msg = reminderToStringDate(&reminder, loc, c.Language, c.IsJalali)
 		}
+		if isSuperGp {
+			st := strconv.FormatInt(c.ChatID, 10)
+			link = fmt.Sprintf("t.me/c/%s/%d", st[4:], reminder.Message)
+			msg = fmt.Sprintf("%d.%s[%c](%s)\n", i+1, msg, '🔗', link)
+		}
+		message = fmt.Sprintf("%s%s", message, msg)
 
 	}
 	return message
@@ -162,16 +176,14 @@ func reminderToStringDur(reminder *internal.Reminder, loc *time.Location, lang i
 	if reminder.IsRepeated {
 		diff := reminder.AtTime.Unix() - time.Now().Unix()
 		mod := diff % int64(reminder.Every.Seconds())
-		message = fmt.Sprintf("%s %s %s\n",
+		message = fmt.Sprintf("%s %s %s",
 			reminder.Description, "➿", time.Duration(mod)*time.Second)
 		return message
 	}
 
 	timeDuration := reminder.AtTime.Sub(time.Now().In(loc))
 	durationString, now := DurationToString(timeDuration)
-	if now {
-		durationString = tr.Lang(string(lang)).Tr("alarm/now")
-	}
+
 	var emoji rune
 	if reminder.Description != "" {
 		emoji = '|'
@@ -179,7 +191,7 @@ func reminderToStringDur(reminder *internal.Reminder, loc *time.Location, lang i
 		emoji = ' '
 	}
 
-	if durationString == "RIGHT NOW" {
+	if now {
 		durationString = tr.Lang(string(lang)).Tr("reminders/done")
 		emoji = '☑'
 	}
@@ -217,5 +229,5 @@ func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, lang 
 		}
 
 	}
-	return fmt.Sprintf("%s %s %s\n", reminder.Description, emoji, timeString)
+	return fmt.Sprintf("%s %s %s", reminder.Description, emoji, timeString)
 }

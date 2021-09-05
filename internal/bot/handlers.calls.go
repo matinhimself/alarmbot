@@ -101,6 +101,7 @@ func (b *Bot) ToggleMute(c *tb.Callback) {
 }
 
 func (b *Bot) DeleteReminder(c *tb.Callback) {
+	log.WithField("data", c.Data).Info("Delete reminder")
 	chat, err := b.GetChat(c.Message.Chat.ID)
 	if err != nil {
 		log.WithField("chat", c.Message.Chat.ID).Error("couldn't find chat ")
@@ -109,7 +110,11 @@ func (b *Bot) DeleteReminder(c *tb.Callback) {
 
 	err = b.db.DeleteReminder(rem)
 	if err != nil {
-		log.Printf("delete remidner %s, %s", rem, err)
+		log.Error("Couldn't delete reminder from database", rem, err)
+	}
+	err = b.s.DeleteByIdentifier(rem)
+	if err != nil {
+		log.Error("Couldn't delete reminder from job handler", rem, err)
 	}
 
 	_, _ = b.Edit(c.Message, fmt.Sprintf("%s\n\n%s", c.Message.Text, tr.Lang(string(chat.Language)).Tr("alarm/deleted")))
