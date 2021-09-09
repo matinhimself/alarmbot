@@ -31,7 +31,7 @@ func (b *Bot) SetTzCommand(m *tb.Message) {
 }
 
 func generateSettingsMessage(chat internal.Chat) string {
-	format := tr.Lang(string(chat.Language)).Tr("responds/updated")
+	format := tr.Lang(string(chat.Language)).Tr("responses/updated")
 	var cal string
 	if chat.IsJalali {
 		cal = tr.Lang(string(chat.Language)).Tr("cal/" + internal.GeoCal)

@@ -26,7 +26,7 @@ func (b *Bot) InitTaskList(m *tb.Message) {
 		b.HandleError(m, "Couldn't find chat")
 	}
 
-	msg, err := b.Send(m.Chat, tr.Lang(string(chat.Language)).Tr("responds/task_list_registered"))
+	msg, err := b.Send(m.Chat, tr.Lang(string(chat.Language)).Tr("responses/task_list_registered"))
 	if err != nil {
 		loge.Errorf("Couldn't send message")
 		return
@@ -54,7 +54,7 @@ func (b *Bot) UpdateTaskListCall(c *tb.Callback) {
 		isDur = true
 	}
 	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, false, isDur, isSuperGp)
-	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responds/update")})
+	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responses/update")})
 }
 
 func (b *Bot) ReformatTaskList(c *tb.Callback) {
@@ -66,7 +66,7 @@ func (b *Bot) ReformatTaskList(c *tb.Callback) {
 		isDur = false
 	}
 	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur, isSuperGp)
-	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responds/reformat")})
+	_ = b.Respond(c, &tb.CallbackResponse{Text: tr.Lang(string(chat.Language)).Tr("responses/reformat")})
 
 }
 
@@ -86,7 +86,7 @@ func (b *Bot) ClearTaskList(c *tb.Callback) {
 		return
 	}
 	b.updateTaskList(&chat, &tb.Message{ID: chat.TaskList, Chat: &tb.Chat{ID: c.Message.Chat.ID}}, true, isDur, isSuperGp)
-	_ = b.Respond(c, &tb.CallbackResponse{Text: fmt.Sprintf(tr.Lang(string(chat.Language)).Tr("responds/clear"), deleted)})
+	_ = b.Respond(c, &tb.CallbackResponse{Text: fmt.Sprintf(tr.Lang(string(chat.Language)).Tr("responses/clear"), deleted)})
 
 }
 

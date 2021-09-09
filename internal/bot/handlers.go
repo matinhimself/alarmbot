@@ -60,6 +60,6 @@ func (b *Bot) Entry(m *tb.Message) {
 		log.Infof("%v", err)
 		return
 	}
-	b.HandleError(m, tr.Lang(string(c.Language)).Tr("responds/registered_before"))
+	b.HandleError(m, tr.Lang(string(c.Language)).Tr("responses/registered_before"))
 
 }
