@@ -142,9 +142,9 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		t = time.Now().Format(DateFormat)
 	}
 	if len(reminders) == 0 {
-		message = fmt.Sprintf("%s\n%s", t, tr.Lang(string(c.Language)).Tr("reminders/no_rem"))
+		message = fmt.Sprintf("*%s*\n%s", t, tr.Lang(string(c.Language)).Tr("reminders/no_rem"))
 	} else {
-		message = fmt.Sprintf("%s\n", t)
+		message = fmt.Sprintf("*%s*\n", t)
 	}
 
 	loc, _ := time.LoadLocation(c.Loc)
@@ -163,9 +163,9 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		if isSuperGp {
 			st := strconv.FormatInt(c.ChatID, 10)
 			link = fmt.Sprintf("t.me/c/%s/%d", st[4:], reminder.Message)
-			msg = fmt.Sprintf("%d.%s[%c](%s)\n", i+1, msg, '🔗', link)
+			msg = fmt.Sprintf("%d.%s[%c](%s)", i+1, msg, '🔗', link)
 		}
-		message = fmt.Sprintf("%s%s", message, msg)
+		message = fmt.Sprintf("%s%s\n", message, msg)
 
 	}
 	return message
@@ -196,7 +196,7 @@ func reminderToStringDur(reminder *internal.Reminder, loc *time.Location, lang i
 		emoji = '☑'
 	}
 
-	return fmt.Sprintf("%s %c%s \n",
+	return fmt.Sprintf("%s %c%s",
 		reminder.Description, emoji, durationString)
 }
 

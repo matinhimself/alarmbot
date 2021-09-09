@@ -53,10 +53,13 @@ func (b *Bot) HandleErrorErr(m *tb.Message, e error, lang internal.Language) {
 func (b *Bot) Entry(m *tb.Message) {
 	log.Infof("Entry called by user %d ", m.Chat.ID)
 	c, err := b.db.GetChat(m.Chat.ID)
-	log.Printf("%v", c)
 	if err == mongo.ErrNoDocuments {
 		b.ChooseLang(m)
+		return
 	} else if err != nil {
 		log.Infof("%v", err)
+		return
 	}
+	b.HandleError(m, tr.Lang(string(c.Language)).Tr("responds/registered_before"))
+
 }
