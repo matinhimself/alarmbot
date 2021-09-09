@@ -153,7 +153,7 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		if reminder.Description != "" {
 			reminder.Description = "*" + reminder.Description + "* "
 		}
-		var msg, link string
+		var msg, link, counter string
 
 		if isDur {
 			msg = reminderToStringDur(&reminder, loc, c.Language)
@@ -163,14 +163,15 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		if isSuperGp {
 			st := strconv.FormatInt(c.ChatID, 10)
 			link = fmt.Sprintf("t.me/c/%s/%d", st[4:], reminder.Message)
-			msg = fmt.Sprintf("%d.%s[%c](%s)", i+1, msg, '🔗', link)
+			if c.Language == internal.FARSI {
+				counter = ToPersianDigits(fmt.Sprintf("%d", i+1))
+			} else {
+				counter = fmt.Sprintf("%d", i+1)
+			}
+			msg = fmt.Sprintf("%s.%s[%c](%s)", counter, msg, '🔗', link)
 		}
 		message = fmt.Sprintf("%s%s\n", message, msg)
 
-	}
-
-	if c.Language == internal.FARSI {
-		message = ToPersianDigits(message)
 	}
 
 	return message
