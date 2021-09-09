@@ -45,16 +45,16 @@ func updateInlineMenuMute(menu [][]tb.InlineButton, selector *tb.ReplyMarkup, la
 				log.Println("updateInlineMenu: ", err)
 			}
 			if u != MuteCall {
-				buttons[i][j] = selector.Data(button.Text, u, d)
+				buttons[i][j] = selector.Data(button.Text, u, button.Data)
 			}
 			p, id, err := extractId(d)
 			if err != nil {
 				continue
 			}
 			if p == internal.Audible {
-				buttons[i][j] = selector.Data(tr.Lang(string(language)).Tr("buttons/"+p.ToString()), MuteCall, fmt.Sprintf("%s:%s", p.ToString(), id))
+				buttons[i][j] = selector.Data(tr.Lang(string(language)).Tr("buttons/"+p.ToString()), MuteCall, fmt.Sprintf("\f%s|%s:%s", MuteCall, p.ToString(), id))
 			} else {
-				buttons[i][j] = selector.Data(tr.Lang(string(language)).Tr("buttons/"+p.ToString()), MuteCall, fmt.Sprintf("%s:%s", p.ToString(), id))
+				buttons[i][j] = selector.Data(tr.Lang(string(language)).Tr("buttons/"+p.ToString()), MuteCall, fmt.Sprintf("\f%s|%s:%s", MuteCall, p.ToString(), id))
 			}
 		}
 	}
@@ -62,6 +62,7 @@ func updateInlineMenuMute(menu [][]tb.InlineButton, selector *tb.ReplyMarkup, la
 }
 
 func (b *Bot) ToggleMute(c *tb.Callback) {
+	fmt.Println(c.Data)
 	chat, _ := b.GetChat(c.Message.Chat.ID)
 	var p internal.Priority
 	data := strings.Split(c.Data, ":")

@@ -17,6 +17,10 @@ const (
 	IRAN = "Asia/Tehran"
 )
 
+var TimeZones = map[string]string{
+	"Iran": "Asia/Tehran",
+}
+
 const (
 	GeoCal   = "gregorian"
 	HijriCal = "hijri"

@@ -61,6 +61,7 @@ func setBot() (*tb.Bot, error) {
 		//Reporter: func(err error) {
 		//	log.Println(err.Error())
 		//},
+		//Verbose: true,
 		Client:    &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxy_url)}},
 		Token:     token,
 		Poller:    &tb.LongPoller{Timeout: 10 * time.Second},

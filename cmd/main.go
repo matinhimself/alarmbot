@@ -14,6 +14,18 @@ func initTr() {
 	}
 }
 
+type fromCall func() string
+
+func (f fromCall) CallbackUnique() string {
+	return f()
+}
+
+func lambdaString(s string) func() string {
+	return func() string {
+		return s
+	}
+}
+
 func main() {
 	b := bot.NewBot()
 	initTr()

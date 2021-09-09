@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"github.com/psyg1k/remindertelbot/internal"
 	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
@@ -25,34 +26,47 @@ func (b *Bot) SetTzCommand(m *tb.Message) {
 	if err != nil {
 		log.Println(err)
 	}
-	_, _ = b.Reply(m, tr.Lang(string(chat.Language)).Tr("responds/tz_changed"))
+	chat.Loc = parts[1]
+	_, _ = b.Reply(m, generateSettingsMessage(chat))
+}
+
+func generateSettingsMessage(chat internal.Chat) string {
+	format := tr.Lang(string(chat.Language)).Tr("responds/updated")
+	var cal string
+	if chat.IsJalali {
+		cal = tr.Lang(string(chat.Language)).Tr("cal/" + internal.GeoCal)
+	} else {
+		cal = tr.Lang(string(chat.Language)).Tr("cal/" + internal.HijriCal)
+	}
+	return fmt.Sprintf(format, chat.ChatID, chat.Loc, cal, chat.Language)
 }
 
 func (b *Bot) SetTz(c *tb.Callback) {
-	chat, _ := b.GetChat(c.Message.Chat.ID)
-	_, err := time.LoadLocation(c.Data)
+	chat, err := b.GetChat(c.Message.Chat.ID)
+	ent := log.WithField("chat", chat)
 	if err != nil {
+		ent.Infof("chat", c.Data)
+	}
+	_, err = time.LoadLocation(c.Data)
+	if err != nil {
+		ent.Infof("couldn't load location %s", c.Data)
 		b.HandleErrorErr(c.Message, err, chat.Language)
+		return
 	}
 	err = b.UpdateTz(c.Message.Chat.ID, c.Data)
 	if err != nil {
 		log.Println(err)
+		b.HandleError(c.Message, err.Error())
 	}
-
-	selector := &tb.ReplyMarkup{}
-	selector.Inline(
-		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/gregorian"), CalCall, internal.GeoCal)),
-		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/hijri"), CalCall, internal.HijriCal)),
-	)
-
-	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("commands/choose_cal"), selector)
+	chat.Loc = c.Data
+	_, _ = b.Edit(c.Message, generateSettingsMessage(chat))
 }
 
-func (b *Bot) SetLanguage(call *tb.Callback) {
-	lang := internal.Language(call.Data)
+func (b *Bot) SetLanguage(c *tb.Callback) {
+	lang := internal.Language(c.Data)
 
 	chat := internal.Chat{
-		ChatID:   call.Message.Chat.ID,
+		ChatID:   c.Message.Chat.ID,
 		TaskList: 0,
 		Loc:      "UTC",
 		Language: lang,
@@ -63,15 +77,14 @@ func (b *Bot) SetLanguage(call *tb.Callback) {
 	if err != nil {
 		log.Println(err)
 	}
-
 	selector := &tb.ReplyMarkup{}
 	selector.Inline(
-		selector.Row(selector.Data("Iran", TzCall, internal.IRAN)),
+		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/gregorian"), CalCall, internal.GeoCal)),
+		selector.Row(selector.Data(tr.Lang(string(chat.Language)).Tr("cal/hijri"), CalCall, internal.HijriCal)),
 	)
-	_, err = b.Edit(call.Message, tr.Lang(string(lang)).Tr("commands/choose_region"), selector)
-	if err != nil {
-		log.Println(err)
-	}
+
+	_, _ = b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("commands/choose_cal"), selector)
+
 }
 
 func (b *Bot) ChooseLang(message *tb.Message) {
@@ -92,16 +105,29 @@ func (b *Bot) ChooseLang(message *tb.Message) {
 	}
 }
 
-func (b *Bot) ChooseCal(call *tb.Callback) {
-	chat, _ := b.GetChat(call.Message.Chat.ID)
+func (b *Bot) ChooseCal(c *tb.Callback) {
+	chat, _ := b.GetChat(c.Message.Chat.ID)
 	var isHijri bool
-	if call.Data == internal.HijriCal {
+	if c.Data == internal.HijriCal {
 		isHijri = true
 	} else {
 		isHijri = false
 	}
 
-	_ = b.UpdateCal(call.Message.Chat.ID, isHijri)
+	_ = b.UpdateCal(c.Message.Chat.ID, isHijri)
 
-	_, _ = b.Edit(call.Message, tr.Lang(string(chat.Language)).Tr("responds/registered"))
+	selector := &tb.ReplyMarkup{}
+
+	rows := make([]tb.Row, len(internal.TimeZones)+1)
+	for k, v := range internal.TimeZones {
+		rows = append(rows, selector.Row(selector.Data(k, TzCall, fmt.Sprintf("\f%s|%s", TzCall, v))))
+	}
+	rows = append(rows, selector.Row(selector.QueryChat(tr.Lang(string(chat.Language)).Tr("buttons/search"), "")))
+
+	selector.Inline(rows...)
+	_, err := b.Edit(c.Message, tr.Lang(string(chat.Language)).Tr("commands/choose_region"), selector)
+	if err != nil {
+		log.Println(err)
+	}
+
 }
