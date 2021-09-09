@@ -168,6 +168,11 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		message = fmt.Sprintf("%s%s\n", message, msg)
 
 	}
+
+	if c.Language == internal.FARSI {
+		message = ToPersianDigits(message)
+	}
+
 	return message
 }
 
