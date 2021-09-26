@@ -1,5 +1,5 @@
 Usage:
-/init - Registers chat tasks list
+/tasklist - Registers chat tasks list
 
 /add <Duration/Date> - Adds a task
  -f, -from  <Duration>
@@ -26,5 +26,5 @@ Time Format
  HH:MM:SS
 
 Example:
- /add 1399/12/29 -m "egg"
-Will add a reminder for 1399/12/29 that will send an "egg" message as an Alarm every 12 Hours (By Default) for last 72 Hours (By Default).
+ /add 2021/12/29 -m "egg"
+Will add a reminder for 2021/12/29 that will send an "egg" message as an Alarm every 12 Hours (By Default) for last 72 Hours (By Default).

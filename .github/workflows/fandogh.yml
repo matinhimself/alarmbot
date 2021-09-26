@@ -9,15 +9,31 @@ on:
 
 
 jobs:
+
   build:
+    runs-on: ubuntu-latest
+
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: deploy action step
-        uses: Glyphack/fandogh-service-deploy-action@v1.2.0
+
+      - name: Extract tag
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Setup python
+        uses: actions/setup-python@v2
         with:
-          username: ${{ secrets.FANDOGH_USERNAME }}
-          password: ${{ secrets.FANDOGH_PASSWORD }}
-          image_name: alarmbot
-          image_version: $(date +%s)
-          path_to_service_file: ./deploy/service.yml
+          python-version: 3.8
+
+      - name: Install fandogh
+        run: |
+          pip install fandogh-cli --upgrade
+
+      - name: Deploy
+        run: |
+          chmod +x ./deploy/fandogh/entry.sh
+          username=${{ secrets.FANDOGH_USERNAME }}
+          password=${{ secrets.FANDOGH_PASSWORD }}
+          image_version=${{ env.RELEASE_VERSION }}
+          ./deploy/fandogh/entry.sh ${(username)} ${(password)} ${(image_version)}

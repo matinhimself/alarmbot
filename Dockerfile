@@ -1,10 +1,13 @@
 FROM golang:alpine
 
-WORKDIR /app
 
+COPY /go.mod app/
+COPY /go.sum app/
+
+WORKDIR app/
+RUN go mod download
 COPY . .
 
-RUN go mod download
 RUN go build -o main ./cmd
-RUN cat .env
+
 CMD ["./main"]

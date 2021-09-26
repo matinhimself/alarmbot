@@ -26,6 +26,7 @@ type Bot struct {
 const (
 	MongoKey = "MONGO_URI"
 	TokenKey = "BOT_TOKEN"
+	ProxyKey = "BOT_PROXY"
 )
 
 func (b *Bot) DeletePassedReminders(chatId int64) (deleted int64, err error) {
@@ -53,8 +54,12 @@ func setBot() (*tb.Bot, error) {
 	if !ok {
 		log.Fatal("couldn't find bot token in env variables")
 	}
-
-	proxy_url, _ := url.Parse("http://127.0.0.1:9999")
+	proxy, ok := os.LookupEnv(ProxyKey)
+	var client *http.Client
+	if ok {
+		proxyUrl, _ := url.Parse(proxy)
+		client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+	}
 
 	b, err := tb.NewBot(tb.Settings{
 
@@ -62,7 +67,7 @@ func setBot() (*tb.Bot, error) {
 		//	log.Println(err.Error())
 		//},
 		//Verbose: true,
-		Client:    &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxy_url)}},
+		Client:    client,
 		Token:     token,
 		Poller:    &tb.LongPoller{Timeout: 10 * time.Second},
 		ParseMode: tb.ModeMarkdown,
