@@ -82,8 +82,9 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 		}
 		rem.From = rem.AtTime.Add(-1 * d)
 	} else if rem.IsRepeated {
-		rem.From = t
+		rem.From = rem.AtTime.Add(-1 * DefaultFromDuration)
 	}
+
 	re := regexp.MustCompile(`-m "([^"]*)"`)
 	names := re.FindStringSubmatch(command)
 	if len(names) >= 2 {
