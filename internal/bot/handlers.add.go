@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"github.com/jalaali/go-jalaali"
+	"github.com/karrick/tparse"
 	"github.com/psyg1k/remindertelbot/internal"
 	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
@@ -12,14 +13,14 @@ import (
 	"time"
 )
 
-func ParseParam(parts []string, rem *internal.Reminder, t time.Time, isJalali bool, loc *time.Location) error {
+func ParseAtTime(parts []string, rem *internal.Reminder, t time.Time, isJalali bool, loc *time.Location) error {
 	if strings.ToLower(parts[0]) == "repeat" {
 		internal.WithRepeat(rem)
 		return nil
 	}
 
-	if duration, err := time.ParseDuration(parts[0]); err == nil {
-		rem.AtTime = t.Add(duration)
+	if atTime, err := tparse.AddDuration(t, parts[0]); err == nil {
+		rem.AtTime = atTime
 		return nil
 	}
 
@@ -57,7 +58,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 	}
 
 	// Parse Command Parameters, Time/duration/repeat
-	err = ParseParam(parts[1:], rem, t, isJalali, location)
+	err = ParseAtTime(parts[1:], rem, t, isJalali, location)
 	if err != nil {
 		return err
 	}
@@ -75,12 +76,13 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 	}
 
 	param, err = GetParam(command, "-f", "from")
+
 	if err == nil {
-		d, err := time.ParseDuration(param)
+		f, err := tparse.AddDuration(rem.AtTime, fmt.Sprintf("-%s", param))
 		if err != nil {
 			return ErrInvalidFromFormat
 		}
-		rem.From = rem.AtTime.Add(-1 * d)
+		rem.From = f
 	} else if rem.IsRepeated {
 		rem.From = rem.AtTime.Add(-1 * DefaultFromDuration)
 	}
