@@ -32,4 +32,4 @@ jobs:
           username=${{ secrets.FANDOGH_USERNAME }}
           password=${{ secrets.FANDOGH_PASSWORD }}
           image_version=${{ env.RELEASE_VERSION }}
-          ./deploy/fandogh/entry.sh ${(username)} ${(password)} ${(image_version)}
+          ./deploy/fandogh/entry.sh $username $password $image_version
