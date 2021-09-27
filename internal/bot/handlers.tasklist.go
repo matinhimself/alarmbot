@@ -158,7 +158,7 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 		if isDur {
 			msg = reminderToStringDur(&reminder, loc, c.Language)
 		} else {
-			msg = reminderToStringDate(&reminder, loc, c.Language, c.IsJalali)
+			msg = reminderToStringDate(&reminder, loc, c.IsJalali)
 		}
 		if isSuperGp {
 			st := strconv.FormatInt(c.ChatID, 10)
@@ -206,10 +206,10 @@ func reminderToStringDur(reminder *internal.Reminder, loc *time.Location, lang i
 		reminder.Description, emoji, durationString)
 }
 
-func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, lang internal.Language, isJalali bool) string {
+func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, isJalali bool) string {
 
 	var timeString string
-	var emoji string
+	var emoji, done string
 
 	if reminder.IsRepeated {
 		t := time.Now().In(loc)
@@ -223,6 +223,9 @@ func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, lang 
 		}
 		emoji = "➿"
 	} else {
+		if !reminder.AtTime.After(time.Now().UTC().In(loc)) {
+			done = "☑️ "
+		}
 		if isJalali {
 			timeString, _ = jalaali.From(reminder.AtTime.In(loc)).JFormat("Mon _2 Jan 06 | 15:04")
 		} else {
@@ -235,5 +238,5 @@ func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, lang 
 		}
 
 	}
-	return fmt.Sprintf("%s %s %s", reminder.Description, emoji, timeString)
+	return fmt.Sprintf("%s %s %s %s", done, reminder.Description, emoji, timeString)
 }

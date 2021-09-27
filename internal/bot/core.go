@@ -57,7 +57,11 @@ func setBot() (*tb.Bot, error) {
 	proxy, ok := os.LookupEnv(ProxyKey)
 	var client *http.Client
 	if ok {
-		proxyUrl, _ := url.Parse(proxy)
+		log.Printf("using %s as proxy.", proxy)
+		proxyUrl, err := url.Parse(proxy)
+		if err != nil {
+			log.Fatal(err)
+		}
 		client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	}
 
@@ -72,6 +76,9 @@ func setBot() (*tb.Bot, error) {
 		Poller:    &tb.LongPoller{Timeout: 10 * time.Second},
 		ParseMode: tb.ModeMarkdown,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return b, err
 }
