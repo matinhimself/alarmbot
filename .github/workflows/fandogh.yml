@@ -28,7 +28,7 @@ jobs:
 
       - name: Deploy
         run: |
-          chmod +x ./deploy/fandogh/entry.sh
+          chmod +x ./deploy/fandogh/workflow/entry.sh
           username=${{ secrets.FANDOGH_USERNAME }}
           password=${{ secrets.FANDOGH_PASSWORD }}
           image_version=${{ env.RELEASE_VERSION }}
