@@ -1,6 +1,11 @@
 kind: ExternalService
 name: reminder
 spec:
+  env:
+    - name: MONGO_URI
+      secret: mongo-uri
+    - name: BOT_TOKEN
+      secret: bot-token
   allow_http: true
   image: ${IMAGE_URL}:${TAG}
   image_pull_policy: IfNotPresent
