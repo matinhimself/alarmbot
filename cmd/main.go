@@ -33,6 +33,7 @@ func main() {
 	b.Handle(bot.HelpCommand, b.HelpCommand)
 	b.Handle(bot.SetTimeZoneCommand, b.SetTzCommand)
 	b.Handle(bot.AddReminderCommand, b.AddCommand)
+	b.Handle(bot.PingCommand, b.Ping)
 
 	b.Handle("\f"+bot.LangCall, b.SetLanguage)
 	b.Handle("\f"+bot.DeleteAlarmCall, b.DeleteReminder)
