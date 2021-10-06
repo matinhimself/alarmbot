@@ -31,5 +31,6 @@ jobs:
           chmod +x ./deploy/fandogh/workflow/entry.sh
           username=${{ secrets.FANDOGH_USERNAME }}
           password=${{ secrets.FANDOGH_PASSWORD }}
-          image_version=${{ steps.vars.outputs.sha_short}}
+          echo ${{ steps.vars.outputs.sha_short }}
+          image_version=${{ steps.vars.outputs.sha_short }}
           ./deploy/fandogh/workflow/entry.sh $username $password $image_version
