@@ -5,6 +5,8 @@ export IMAGE_URL='reminderimage'
 echo $RELEASE_VERSION
 export TAG=$RELEASE_VERSION
 
+RELEASE_VERSION=$(rev-parse --short HEAD)
+
 COLLECT_ERROR=True fandogh login --username $username --password $password
 
 COLLECT_ERROR=True fandogh image init --name  $IMAGE_URL
