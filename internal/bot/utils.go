@@ -56,8 +56,8 @@ func formatDateTime(timeString string, date *time.Time, loc *time.Location) erro
 	var sec, min, hour int
 	var round = time.Minute
 
-	hhMmSs := regexp.MustCompile(`(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})`)
-	hhMm := regexp.MustCompile(`(?P<hour>\d{2}):(?P<min>\d{2})`)
+	hhMmSs := regexp.MustCompile(`(?P<hour>\d{1,2}):(?P<min>\d{1,2}):(?P<sec>\d{1,2})`)
+	hhMm := regexp.MustCompile(`(?P<hour>\d{1,2}):(?P<min>\d{1,2})`)
 
 	hm, err := matchRegexAlt(timeString, hhMmSs, hhMm)
 	if err != nil {

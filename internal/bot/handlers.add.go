@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 	"github.com/jalaali/go-jalaali"
-	"github.com/karrick/tparse"
+	"github.com/karrick/tparse/v2"
 	"github.com/psyg1k/remindertelbot/internal"
 	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
@@ -15,7 +15,8 @@ import (
 
 func ParseAtTime(parts []string, rem *internal.Reminder, t time.Time, isJalali bool, loc *time.Location) error {
 	if strings.ToLower(parts[0]) == "repeat" {
-		internal.WithRepeat(rem)
+		rem.AtTime = t.In(loc)
+		rem.IsRepeated = true
 		return nil
 	}
 
@@ -41,6 +42,7 @@ func ParseAtTime(parts []string, rem *internal.Reminder, t time.Time, isJalali b
 
 	return nil
 }
+
 func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalali bool) error {
 	location, err := time.LoadLocation(loc)
 	if err != nil {
@@ -71,7 +73,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 		}
 	}
 
-	if rem.AtTime.Unix() < t.Unix() {
+	if rem.AtTime.Unix() < t.Unix() && !rem.IsRepeated {
 		return ErrPassedTime
 	}
 
@@ -82,7 +84,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 		if err != nil {
 			return ErrInvalidFromFormat
 		}
-		rem.From = f
+		rem.From = f.In(location)
 	} else if rem.IsRepeated {
 		rem.From = rem.AtTime.Add(-1 * DefaultFromDuration)
 	}
@@ -95,11 +97,29 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 
 	param, err = GetParam(command, "-e", "every")
 	if err == nil {
-		d, err := time.ParseDuration(param)
-		if err != nil || d < 5*time.Second {
-			return ErrInvalidEveryFormat
+		if rem.IsRepeated {
+			weekday, err := parseWeekday(param)
+			if err != nil {
+				return err
+			}
+
+			// Add 24 hours if time is passed
+			// to make sure it will start from
+			// next week.
+			if weekday == rem.AtTime.In(location).Weekday() && rem.AtTime.In(location).Before(t.In(location)) {
+				rem.AtTime = rem.AtTime.Add(24 * time.Hour)
+			}
+			rem.AtTime = ClosestDayOfWeek(rem.AtTime, weekday)
+			rem.Every = 24 * time.Hour * 7
+
+		} else {
+			d, err := tparse.AbsoluteDuration(t, param)
+			if err != nil || d < 5*time.Second {
+				return ErrInvalidEveryFormat
+			}
+			rem.Every = d
 		}
-		rem.Every = d
+
 	}
 	return nil
 
@@ -145,6 +165,9 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		return
 	} else if err == ErrPassedTime {
 		b.HandleError(m, tr.Lang(string(chat.Language)).Tr("errors/passed_time"))
+		return
+	} else if err != nil {
+		b.HandleError(m, err.Error())
 		return
 	}
 	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("commands/adding_reminder"))

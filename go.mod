@@ -7,7 +7,7 @@ require (
 	github.com/etdub/goparsetime v0.0.0-20160315173935-ea17b0ac3318 // indirect
 	github.com/jalaali/go-jalaali v0.0.0-20200831101426-11d9c8c19878
 	github.com/joho/godotenv v1.3.0
-	github.com/karrick/tparse v2.4.2+incompatible
+	github.com/karrick/tparse/v2 v2.8.2
 	github.com/sirupsen/logrus v1.4.2
 	github.com/tucnak/tr v0.0.0-20171207114130-bfa44f5157dd
 	go.mongodb.org/mongo-driver v1.5.2

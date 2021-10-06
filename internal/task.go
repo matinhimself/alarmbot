@@ -32,13 +32,6 @@ const MaxTimeUnix = 1 << 34 // "github.com/jalaali/go-jalaali" for reasons
 // doesn't support whole int64 as a unix time :( so for max available time
 // I should use 1<<35 instead of 1<<63
 
-var MaxTime = time.Unix(MaxTimeUnix, 0)
-
-func WithRepeat(rem *Reminder) {
-	rem.AtTime = time.Unix(MaxTimeUnix<<1, 0)
-	rem.IsRepeated = true
-}
-
 func (r *Reminder) GetIdentifier() string {
 	return r.Id.Hex()
 }

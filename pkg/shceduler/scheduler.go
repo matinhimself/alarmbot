@@ -18,20 +18,22 @@ type Job struct {
 
 	data G
 
-	passed    bool
-	isLastRun bool
+	isOnRepeat bool
+	passed     bool
+	isLastRun  bool
 }
 
-func NewJob(atTime time.Time, every time.Duration, from time.Time, data G) *Job {
+func NewJob(atTime time.Time, every time.Duration, from time.Time, data G, isOnRepeat bool) *Job {
 	return &Job{
-		atTime:    atTime,
-		every:     every,
-		from:      from,
-		lastRun:   time.Time{},
-		nextRun:   time.Time{},
-		data:      data,
-		passed:    false,
-		isLastRun: false,
+		atTime:     atTime,
+		every:      every,
+		from:       from,
+		lastRun:    time.Time{},
+		nextRun:    time.Time{},
+		data:       data,
+		isOnRepeat: isOnRepeat,
+		passed:     false,
+		isLastRun:  false,
 	}
 }
 
@@ -85,19 +87,28 @@ func NewScheduler(ticker *time.Ticker, passedChannel chan interface{}) *Schedule
 }
 
 func (s *Scheduler) AddJob(data G, atTime time.Time, every time.Duration,
-	from time.Time) {
+	from time.Time, isOnRepeat bool) {
 
-	job := NewJob(atTime, every, from, data)
+	job := NewJob(atTime, every, from, data, isOnRepeat)
 	job.PlanFirstRun()
 	s.jobs = append(s.jobs, job)
 }
 
 func (job *Job) PlanNext() {
+	// plan next onRepeat run
+	if job.isOnRepeat {
+		job.nextRun = job.lastRun.Add(job.every)
+		return
+	}
+
 	if job.isLastRun {
+		// last tick
 		job.passed = true
 	} else if sum := job.lastRun.Add(job.every); sum.Unix() < job.atTime.Unix() {
+		// plan next run for normal ticks
 		job.nextRun = sum
 	} else {
+		// plan for last tick
 		job.isLastRun = true
 		job.nextRun = job.atTime
 	}
@@ -105,6 +116,11 @@ func (job *Job) PlanNext() {
 
 func (job *Job) PlanFirstRun() {
 	t := time.Now().UTC().Round(time.Second)
+
+	if job.isOnRepeat {
+		job.nextRun = job.atTime
+		return
+	}
 
 	if job.from.Unix() < t.Unix() {
 		if job.atTime.Sub(t) <= job.every {

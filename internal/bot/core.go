@@ -142,7 +142,7 @@ func (b *Bot) Run() {
 }
 
 func (b *Bot) AddReminder(r *internal.Reminder) {
-	b.s.AddJob(r, r.AtTime, r.Every, r.From)
+	b.s.AddJob(r, r.AtTime, r.Every, r.From, r.IsRepeated)
 }
 
 func (b *Bot) Qtz(q *tb.Query) {

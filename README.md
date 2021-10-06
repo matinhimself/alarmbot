@@ -10,10 +10,10 @@ Set mongo-uri and bot-token **ENV Secrets**.
 ## TODO
 - [x] Multi-language
 - [x] Supports both Date and Duration to add tasks
-- [x] Supports diffrent timezones
+- [x] Supports different timezones
 - [x] Supports Gregorian and Hijri Calenders
 - [x] daily reminders
-- [x] Tasklists
+- [x] Task lists
 - [x] Automated deploy with github actions
 - [ ] Deploy scripts
 
