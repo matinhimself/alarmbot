@@ -8,6 +8,7 @@ import (
 	"github.com/tucnak/tr"
 	"go.mongodb.org/mongo-driver/mongo"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"os"
 	"time"
 )
 
@@ -27,6 +28,7 @@ const (
 	SetTimeZoneCommand = "/settz"
 	InitTaskList       = "/tasklist"
 	AddReminderCommand = "/add"
+	PingCommand        = "/ping"
 	HelpCommand        = "/help"
 
 	DefaultEvery        = time.Hour * 12
@@ -62,4 +64,13 @@ func (b *Bot) Entry(m *tb.Message) {
 	}
 	b.HandleError(m, tr.Lang(string(c.Language)).Tr("responses/registered_before"))
 
+}
+
+func (b *Bot) Ping(m *tb.Message) {
+	log.Infof("Ping called by user %d ", m.Chat.ID)
+	version, ok := os.LookupEnv("RELEASE_VERSION")
+	if !ok {
+		version = "-"
+	}
+	_, _ = b.Reply(m, fmt.Sprintf("Version: %s", version))
 }
