@@ -3,10 +3,6 @@ on:
     push:
       tags:
         - 'v*.*.*'
-      branches:
-        - main
-        - master
-
 
 jobs:
   deploy:
@@ -31,5 +27,4 @@ jobs:
           chmod +x ./deploy/fandogh/workflow/entry.sh
           username=${{ secrets.FANDOGH_USERNAME }}
           password=${{ secrets.FANDOGH_PASSWORD }}
-          echo $RELEASE_VERSION
-          ./deploy/fandogh/workflow/entry.sh $username $password $RELEASE_VERSION
+          ./deploy/fandogh/workflow/entry.sh $username $password
