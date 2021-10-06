@@ -3,7 +3,7 @@ name: reminder
 spec:
   env:
     - name: VERSION
-      secret: ${RELEASE_VERSION}
+      value: ${RELEASE_VERSION}
     - name: MONGO_URI
       secret: mongo-uri
     - name: BOT_TOKEN
