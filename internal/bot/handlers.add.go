@@ -85,7 +85,7 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 			return ErrInvalidFromFormat
 		}
 		rem.From = f.In(location)
-	} else if rem.IsRepeated {
+	} else if !rem.IsRepeated {
 		rem.From = rem.AtTime.Add(-1 * DefaultFromDuration)
 	}
 
