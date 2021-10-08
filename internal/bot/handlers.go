@@ -68,7 +68,7 @@ func (b *Bot) Entry(m *tb.Message) {
 
 func (b *Bot) Ping(m *tb.Message) {
 	log.Infof("Ping called by user %d ", m.Chat.ID)
-	version, ok := os.LookupEnv("RELEASE_VERSION")
+	version, ok := os.LookupEnv("VERSION")
 	if !ok {
 		version = "-"
 	}
