@@ -9,7 +9,7 @@ spec:
     - name: BOT_TOKEN
       secret: bot-token
   allow_http: true
-  image: ${IMAGE_URL}:${TAG}
+  image: ${IMAGE_URL}:${RELEASE_VERSION}
   image_pull_policy: IfNotPresent
   path: /
   replicas: 1
