@@ -27,4 +27,4 @@ jobs:
           chmod +x ./deploy/fandogh/workflow/entry.sh
           username=${{ secrets.FANDOGH_USERNAME }}
           password=${{ secrets.FANDOGH_PASSWORD }}
-          ./deploy/fandogh/workflow/entry.sh $username $password
+          ./deploy/fandogh/workflow/entry.sh $username $password $RELEASE_VERSION
