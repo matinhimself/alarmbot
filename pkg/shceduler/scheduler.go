@@ -119,6 +119,11 @@ func (job *Job) PlanFirstRun() {
 
 	if job.isOnRepeat {
 		job.nextRun = job.atTime
+
+		for job.nextRun.Before(t) {
+			job.nextRun = job.nextRun.Add(job.every)
+		}
+
 		return
 	}
 
