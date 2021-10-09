@@ -256,7 +256,8 @@ func generateAlarmMessage(format string, rem *internal.Reminder, chat internal.C
 	message := rem.Description
 
 	if rem.IsRepeated {
-		message = fmt.Sprintf(format, message, rem.Every.String())
+		remString, _ := DurationToString(rem.Every)
+		message = fmt.Sprintf(format, message, remString)
 
 	} else {
 		remaining := rem.AtTime.Sub(t).Round(rem.Every)
