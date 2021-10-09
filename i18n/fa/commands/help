@@ -1,12 +1,13 @@
-:hankey: need translation.
 Usage:
 /tasklist - Registers chat tasks list
 
-/add <Duration/Date> - Adds a task
- -f, -from  <Duration>
- -e, -every <Duration>
+/add <Duration/Date/repeat> - Adds a task
+```
+ -f, -from  <Duration> -> Default: 3 days
+ -e, -every <Duration> -> Default: 12h hours
  -t, -time  <Time>
  -m         "<String>"
+```
 
 Duration Format:
  let X be a Whole Num
@@ -15,17 +16,26 @@ Duration Format:
  Xh    => X Hours
  Xd, X => X Days
 
-
 Date Format:
  YYYY[-/,]MM[-/,]DD
  DD[-/,]MM[-/,]YYYY
 
-Only jalaali(Persian) Date is acceptable for this bot:(
+Repeat Format:
+``` example:
+    /add repeat -e <Weekday> -t 13:30
 
-Time Format
+    Weekday Format:
+     sunday/sun
+     monday/mon
+     ....
+```
+
+Time Format:
  HH:MM
  HH:MM:SS
 
-Example:
- /add 1399/12/29 -m "egg"
-Will add a reminder for 1399/12/29 that will send an "egg" message as an Alarm every 12 Hours (By Default) for last 72 Hours (By Default).
+Examples:
+ /add 2021/12/29 -m "egg"
+ /add 30d-3d+5h
+ /add 3d -e 3h -f 12h
+ /add repeat -e mon -t 13:20 -m "English class"
