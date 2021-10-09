@@ -215,6 +215,12 @@ func reminderToStringDate(reminder *internal.Reminder, loc *time.Location, isJal
 
 	if reminder.IsRepeated {
 		t := time.Now().In(loc)
+
+		// It's better to store last run for each reminder but i'm tired.
+		for reminder.AtTime.Before(t) {
+			reminder.AtTime.Add(reminder.Every)
+		}
+
 		diff := reminder.AtTime.Unix() - t.Unix()
 		mod := diff % int64(reminder.Every.Seconds())
 
