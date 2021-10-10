@@ -4,12 +4,16 @@ spec:
   env:
     - name: VERSION
       value: ${TAG}
+    - name: SHA
+      value: ${COMMIT_SHA}
+
     - name: MONGO_URI
       secret: mongo-uri
     - name: BOT_TOKEN
       secret: bot-token
+
   allow_http: true
-  image: ${IMAGE_URL}:${RELEASE_VERSION}
+  image: ${IMAGE_URL}:${TAG}
   image_pull_policy: IfNotPresent
   path: /
   replicas: 1
