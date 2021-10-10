@@ -67,8 +67,8 @@ func (b *Bot) Entry(m *tb.Message) {
 }
 
 func (b *Bot) Ping(m *tb.Message) {
-	version, ok := os.LookupEnv("TAG")
-	sha, ok := os.LookupEnv("COMMIT_SHA")
+	version, ok := os.LookupEnv("VERSION")
+	sha, ok := os.LookupEnv("SHA")
 	if !ok {
 		version = "-"
 	}
