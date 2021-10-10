@@ -185,7 +185,8 @@ func reminderToStringDur(reminder *internal.Reminder, loc *time.Location, lang i
 		if mod < 0 {
 			mod += int64(reminder.Every.Seconds())
 		}
-		message = fmt.Sprintf("%s %s %s", reminder.Description, "➿", time.Duration(mod)*time.Second)
+		durationString, _ := DurationToString(time.Duration(mod) * time.Second)
+		message = fmt.Sprintf("%s %s %s", reminder.Description, "➿", durationString)
 		return message
 	}
 
