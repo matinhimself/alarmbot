@@ -94,6 +94,10 @@ func (s *Scheduler) AddJob(data G, atTime time.Time, every time.Duration,
 	s.jobs = append(s.jobs, job)
 }
 
+func (s *Scheduler) JobsSize() int {
+	return len(s.jobs)
+}
+
 func (job *Job) PlanNext() {
 	// plan next onRepeat run
 	if job.isOnRepeat {
