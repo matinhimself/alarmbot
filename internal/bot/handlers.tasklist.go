@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tucnak/tr"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -148,6 +149,24 @@ func generateTaskListMessage(reminders []internal.Reminder, c *internal.Chat, is
 	}
 
 	loc, _ := time.LoadLocation(c.Loc)
+
+	CalculateRemainingTime := func(reminder internal.Reminder) time.Duration {
+		if reminder.IsRepeated {
+			diff := reminder.AtTime.Unix() - time.Now().Unix()
+			mod := diff % int64(reminder.Every.Seconds())
+			if mod < 0 {
+				mod += int64(reminder.Every.Seconds())
+			}
+			return time.Duration(mod) * time.Second
+		}
+		return reminder.AtTime.Sub(time.Now().UTC())
+	}
+
+	sort.SliceStable(reminders, func(i, j int) bool {
+		remainingTime := CalculateRemainingTime(reminders[i])
+		otherRemainingTime := CalculateRemainingTime(reminders[j])
+		return remainingTime < otherRemainingTime
+	})
 
 	for i, reminder := range reminders {
 		if reminder.Description != "" {
