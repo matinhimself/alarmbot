@@ -21,6 +21,11 @@ func (db *Db) DeleteRemindersBefore(id int64, t time.Time) (int64, error) {
 				),
 			},
 			},
+			{
+				"is_repeated": bson.M{
+					"$ne": true,
+				},
+			},
 		},
 	}
 
