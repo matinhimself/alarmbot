@@ -60,20 +60,22 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 	}
 
 	// Parse Command Parameters, Time/duration/repeat
-	err = ParseAtTime(parts[1:], rem, t, isJalali, location)
-	if err != nil {
-		return err
-	}
+	paramErr := ParseAtTime(parts[1:], rem, t, isJalali, location)
 
 	param, err := GetParam(command, "-t", "time")
 	if err == nil {
+		if paramErr != nil {
+			rem.AtTime = t.Round(24 * time.Hour)
+		}
 		err := formatDateTime(param, &rem.AtTime, location)
 		if err != nil {
 			return err
 		}
+	} else if paramErr != nil {
+		return paramErr
 	}
 
-	if rem.AtTime.Unix() < t.Unix() && !rem.IsRepeated {
+	if rem.AtTime.In(location).Before(t.In(location)) && !rem.IsRepeated {
 		return ErrPassedTime
 	}
 
