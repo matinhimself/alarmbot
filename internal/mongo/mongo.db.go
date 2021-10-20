@@ -62,3 +62,38 @@ func (db *Db) GetRemindersAfter(now time.Time) ([]internal.Reminder, error) {
 
 	return reminders, nil
 }
+
+func (db *Db) GetRemindersAfterOrIsRepeated(now time.Time) ([]internal.Reminder, error) {
+	var reminders []internal.Reminder
+
+	filter := bson.M{
+		"$or": []bson.M{
+			{"time": bson.M{
+				"$gt": primitive.NewDateTimeFromTime(now),
+			},
+			},
+			{
+				"is_repeated": bson.M{
+					"$eq": true,
+				},
+			},
+		},
+	}
+
+	cur, err := db.remindersCollection.Find(context.TODO(), filter)
+	if err != nil {
+		log.Println(err)
+		return reminders, err
+	}
+
+	for cur.Next(context.TODO()) {
+		var reminder internal.Reminder
+		err := cur.Decode(&reminder)
+		if err != nil {
+			continue
+		}
+		reminders = append(reminders, reminder)
+	}
+
+	return reminders, nil
+}

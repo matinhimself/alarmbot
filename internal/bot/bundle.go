@@ -9,7 +9,7 @@ import (
 
 func (b *Bot) LoadReminders() error {
 
-	reminders, err := b.db.GetRemindersAfter(time.Now())
+	reminders, err := b.db.GetRemindersAfterOrIsRepeated(time.Now())
 	if err != nil {
 		log.Println(err)
 		return err
