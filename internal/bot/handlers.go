@@ -69,10 +69,13 @@ func (b *Bot) Entry(m *tb.Message) {
 func (b *Bot) Ping(m *tb.Message) {
 	version, ok := os.LookupEnv("VERSION")
 	sha, ok := os.LookupEnv("SHA")
+	messages, ok := os.LookupEnv("COMMIT_MESSAGES")
 	if !ok {
 		version = "-"
 	}
-	_, _ = b.Reply(m, fmt.Sprintf("Status: %d jobs are pending\n"+
-		"Version: %s\n"+
-		"Deploy Commit: https://github.com/matinhimself/alarmbot/commit/%s", b.s.JobsSize(), version, sha))
+	_, _ = b.Reply(m, fmt.Sprintf(
+		"Status: %d jobs are pending\n"+
+			"Version: %s\n"+
+			"Update logs:%s\n"+
+			"[Deploy Commit](https://github.com/matinhimself/alarmbot/commit/%s)", b.s.JobsSize(), version, messages, sha))
 }
