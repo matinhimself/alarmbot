@@ -102,17 +102,21 @@ func ParseAddCommand(command string, rem *internal.Reminder, loc string, isJalal
 		if rem.IsRepeated {
 			weekday, err := parseWeekday(param)
 			if err != nil {
-				return err
+				d, err := tparse.AbsoluteDuration(t, param)
+				if err != nil || d < 5*time.Second {
+					return ErrInvalidEveryFormat
+				}
+				rem.Every = d
+			} else {
+				// Add 24 hours if time is passed
+				// to make sure it will start from
+				// next week.
+				if weekday == rem.AtTime.In(location).Weekday() && rem.AtTime.In(location).Before(t.In(location)) {
+					rem.AtTime = rem.AtTime.Add(24 * time.Hour)
+				}
+				rem.AtTime = ClosestDayOfWeek(rem.AtTime, weekday)
+				rem.Every = 24 * time.Hour * 7
 			}
-
-			// Add 24 hours if time is passed
-			// to make sure it will start from
-			// next week.
-			if weekday == rem.AtTime.In(location).Weekday() && rem.AtTime.In(location).Before(t.In(location)) {
-				rem.AtTime = rem.AtTime.Add(24 * time.Hour)
-			}
-			rem.AtTime = ClosestDayOfWeek(rem.AtTime, weekday)
-			rem.Every = 24 * time.Hour * 7
 
 		} else {
 			d, err := tparse.AbsoluteDuration(t, param)
