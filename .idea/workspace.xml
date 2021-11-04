@@ -20,6 +20,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54118320-b7a4-4fc3-aebc-a3b667261c82" name="Default Changelist" comment="fix commit messages extraction bug">
+      <change beforePath="$PROJECT_DIR$/deploy/fandogh/service.yml" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/fandogh/service.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deploy/fandogh/workflow/entry.sh" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/fandogh/workflow/entry.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

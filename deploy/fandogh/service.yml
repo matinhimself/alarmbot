@@ -7,7 +7,7 @@ spec:
     - name: SHA
       value: ${COMMIT_SHA}
     - name: MESSAGES
-      value: ${COMMIT_MESSAGES}
+      value: ${CM}
 
     - name: MONGO_URI
       secret: mongo-uri
