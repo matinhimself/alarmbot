@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSource name="MongoDB - jobs@cluster0.q0his.mongodb.net">
+  <database-model serializer="dbm" dbms="MONGO" family-id="MONGO" format-version="4.19">
+    <root id="1">
+      <ServerVersion>4.4.8</ServerVersion>
+    </root>
+    <schema id="2" parent="1" name="admin"/>
+    <schema id="3" parent="1" name="jobs">
+      <Current>1</Current>
+    </schema>
+    <schema id="4" parent="1" name="local"/>
+    <schema id="5" parent="1" name="reminder_bot"/>
+  </database-model>
+</dataSource>
