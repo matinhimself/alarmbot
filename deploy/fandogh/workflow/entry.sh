@@ -3,16 +3,15 @@ password=$2
 export TAG=$3
 export IMAGE_URL='reminderimage'
 export COMMIT_SHA=$(git rev-parse HEAD)
-export COMMIT_MESSAGES=`git log $(git describe --tags --abbrev=0)..HEAD --oneline`
-
+export CM=`git log $(git describe --tags --abbrev=0)^^..HEAD --oneline`
 COLLECT_ERROR=True fandogh login --username $username --password $password
 
 echo "image name: ${IMAGE_URL}"
 echo "image version: ${TAG}"
 echo "commit sha: ${TAG}"
-echo "commit messages: ${COMMIT_MESSAGES}"
+echo "commit messages: ${CM}"
 
 COLLECT_ERROR=True fandogh image init --name  $IMAGE_URL
 COLLECT_ERROR=True fandogh image publish --version $TAG
 
-COLLECT_ERROR=True fandogh service apply -f ./deploy/fandogh/service.yml -p IMAGE_URL -p COMMIT_SHA -p TAG -p COMMIT_MESSAGES
+COLLECT_ERROR=True fandogh service apply -f ./deploy/fandogh/service.yml -p IMAGE_URL -p COMMIT_SHA -p TAG -p CM
