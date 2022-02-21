@@ -9,7 +9,7 @@ COLLECT_ERROR=True fandogh login --username $username --password $password
 echo "image name: ${IMAGE_URL}"
 echo "image version: ${TAG}"
 echo "commit sha: ${COMMIT_SHA}"
-echo "commit messages: ${CM}"
+echo "commit messages: ${COMMIT_SHA}"
 
 COLLECT_ERROR=True fandogh image init --name  $IMAGE_URL
 COLLECT_ERROR=True fandogh image publish --version $TAG
