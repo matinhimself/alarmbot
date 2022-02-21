@@ -159,6 +159,7 @@ func (s *Scheduler) Start() {
 			if s.jobs[i].passed {
 				_ = s.Delete(i)
 			} else if s.jobs[i].IsTime() {
+				fmt.Println(s.jobs[i].data)
 				s.passedChannel <- s.jobs[i].data
 				s.jobs[i].lastRun = s.jobs[i].nextRun
 				s.jobs[i].PlanNext()

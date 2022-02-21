@@ -176,6 +176,7 @@ func (b *Bot) AddCommand(m *tb.Message) {
 		b.HandleError(m, err.Error())
 		return
 	}
+	fmt.Println(chat.Language)
 	reply, _ := b.Reply(m, tr.Lang(string(chat.Language)).Tr("commands/adding_reminder"))
 
 	if m.IsReply() {
