@@ -14,4 +14,6 @@ echo "commit messages: ${CM}"
 COLLECT_ERROR=True fandogh image init --name  $IMAGE_URL
 COLLECT_ERROR=True fandogh image publish --version $TAG
 
+
+
 COLLECT_ERROR=True fandogh service apply -f ./deploy/fandogh/service.yml -p IMAGE_URL -p COMMIT_SHA -p TAG -p CM
